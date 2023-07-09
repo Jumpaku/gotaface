@@ -88,7 +88,7 @@ CREATE TABLE t9 (
 ) PRIMARY KEY (id1, id2, id3),
 	INTERLEAVE IN PARENT t8`})
 
-	out, err := dbschema.DBSchemaFunc(context.Background(), "spanner", fullDatabase)
+	out, err := dbschema.DBSchema{}.Exec(context.Background(), "spanner", fullDatabase)
 	if err != nil {
 		t.Errorf(`fail to run: %v`, err)
 	}

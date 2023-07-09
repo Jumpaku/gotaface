@@ -70,7 +70,7 @@ CREATE TABLE t6 (
 	FOREIGN KEY (id1, id2) REFERENCES t5 (id1, id2));
 `}})
 
-	out, err := dbschema.DBSchemaFunc(context.Background(), "sqlite3", dataSource)
+	out, err := dbschema.DBSchema{}.Exec(context.Background(), "sqlite3", dataSource)
 	if err != nil {
 		t.Errorf(`fail to run: %v`, err)
 	}

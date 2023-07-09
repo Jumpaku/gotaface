@@ -2,20 +2,16 @@ package dbschema
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"cloud.google.com/go/spanner"
-	"github.com/Jumpaku/gotaface/ddl/schema"
+	"github.com/Jumpaku/gotaface/cli/dbschema"
 	spanner_schema "github.com/Jumpaku/gotaface/spanner/ddl/schema"
 )
 
-type DBSchemaOutput = interface {
-	json.Marshaler
-	schema.Schema
-}
+type DBSchema struct{}
 
-func DBSchemaFunc(ctx context.Context, driver string, dataSource string) (DBSchemaOutput, error) {
+func (DBSchema) Exec(ctx context.Context, driver string, dataSource string) (dbschema.DBSchemaOutput, error) {
 	client, err := spanner.NewClient(ctx, dataSource)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to create spanner client: %w`, err)

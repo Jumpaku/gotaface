@@ -3,14 +3,13 @@ package main
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
 
-	"github.com/Jumpaku/gotaface/ddl/schema"
+	"github.com/Jumpaku/gotaface/cli/dbschema"
 	dbschema_spanner "github.com/Jumpaku/gotaface/spanner/cli/dbschema"
 	dbschema_sqlite3 "github.com/Jumpaku/gotaface/sqlite3/cli/dbschema"
 )
@@ -38,30 +37,24 @@ func main() {
 	}
 }
 
-type DBSchemaOutput = interface {
-	json.Marshaler
-	schema.Schema
-}
-type DBSchemaFunc func(ctx context.Context, driver string, dataSource string) (DBSchemaOutput, error)
-
 type Runner struct {
 	driver     string
 	dataSource string
 }
 
 func (runner Runner) Run(ctx context.Context, stdin io.Reader, stdout io.Writer) error {
-	var bdSchemaFunc DBSchemaFunc
+	var bdSchema dbschema.DBSchema
 
 	switch runner.driver {
 	default:
 		return fmt.Errorf(`unsupported driver %s`, runner.driver)
 	case `spanner`:
-		bdSchemaFunc = dbschema_spanner.DBSchemaFunc
+		bdSchema = dbschema_spanner.DBSchema{}
 	case `sqlite3`:
-		bdSchemaFunc = dbschema_sqlite3.DBSchemaFunc
+		bdSchema = dbschema_sqlite3.DBSchema{}
 	}
 
-	o, err := bdSchemaFunc(ctx, runner.driver, runner.dataSource)
+	o, err := bdSchema.Exec(ctx, runner.driver, runner.dataSource)
 	if err != nil {
 		return fmt.Errorf(`fail to execute dbschema: %w`, err)
 	}

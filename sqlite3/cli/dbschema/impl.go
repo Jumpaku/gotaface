@@ -3,20 +3,16 @@ package dbschema
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 
-	"github.com/Jumpaku/gotaface/ddl/schema"
+	"github.com/Jumpaku/gotaface/cli/dbschema"
 	sqlite3_schema "github.com/Jumpaku/gotaface/sqlite3/ddl/schema"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type DBSchemaOutput = interface {
-	json.Marshaler
-	schema.Schema
-}
+type DBSchema struct{}
 
-func DBSchemaFunc(ctx context.Context, driver string, dataSource string) (DBSchemaOutput, error) {
+func (DBSchema) Exec(ctx context.Context, driver string, dataSource string) (dbschema.DBSchemaOutput, error) {
 	db, err := sql.Open("sqlite3", dataSource)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to create sqlite3 client: %w`, err)
