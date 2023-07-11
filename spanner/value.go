@@ -203,6 +203,12 @@ func ToDBValue(columnType string, src any) (any, error) {
 				return nil, fmt.Errorf(`fail to scan %v as NullNumeric`, spew.Sdump(src))
 			}
 			return spanner.NullNumeric{Valid: true, Numeric: *v}, nil
+		case string:
+			v, ok := (&big.Rat{}).SetString(src)
+			if !ok {
+				return nil, fmt.Errorf(`fail to scan %v as NullNumeric`, spew.Sdump(src))
+			}
+			return spanner.NullNumeric{Valid: true, Numeric: *v}, nil
 		default:
 			dst := &spanner.NullNumeric{}
 			if err := dst.Scan(src); err != nil {

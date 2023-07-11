@@ -674,6 +674,20 @@ func TestToDBValue_NUMERIC(t *testing.T) {
 			src:  (*big.Rat)(nil),
 			want: spanner.NullNumeric{},
 		},
+		// string
+		{
+			typ:  "NUMERIC",
+			src:  `30.75`,
+			want: spanner.NullNumeric{Valid: true, Numeric: *big.NewRat(123, 4)},
+		}, {
+			typ:  "NUMERIC",
+			src:  ptr(`30.75`),
+			want: spanner.NullNumeric{Valid: true, Numeric: *big.NewRat(123, 4)},
+		}, {
+			typ:  "NUMERIC",
+			src:  (*string)(nil),
+			want: spanner.NullNumeric{},
+		},
 	}
 
 	for i, testCase := range testCases {
