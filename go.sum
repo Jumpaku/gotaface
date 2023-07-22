@@ -15,8 +15,6 @@ cloud.google.com/go/spanner v1.46.0/go.mod h1:H6RAuzCuV4Eba2rh4oay2izcO9HNFQkJK7
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Jumpaku/go-assert v1.0.0 h1:0mrYBCxRHlHgnFh9+S/m8lKVMlK0Fvqq/V86k2CNZYY=
 github.com/Jumpaku/go-assert v1.0.0/go.mod h1:WUm/awdnfBic4hBSBk8Fiyqkv1Pm1P9zXQQG6kNtrNQ=
-github.com/Jumpaku/go-json-value v1.0.0 h1:Ehl6pnLWqP0St2tJvS9NbKwcKcvV/9eOi+nnu3JuF30=
-github.com/Jumpaku/go-json-value v1.0.0/go.mod h1:AcgHRb9gDo2TsCMH2q1vt4wUrh/lIxBq2X2Ro5Sb2QY=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/census-instrumentation/opencensus-proto v0.4.1 h1:iKLQ0xPNFxR/2hzXZMrBo8f1j86j5WHzznCCQxV/b8g=

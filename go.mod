@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	cloud.google.com/go/spanner v1.46.0
-	github.com/Jumpaku/go-json-value v1.0.0
+	github.com/Jumpaku/go-assert v1.0.0
 	github.com/mattn/go-sqlite3 v1.14.16
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
 )
@@ -12,7 +12,6 @@ require (
 require (
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/longrunning v0.4.1 // indirect
-	github.com/Jumpaku/go-assert v1.0.0 // indirect
 	google.golang.org/api v0.125.0 // indirect
 )
 
