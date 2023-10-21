@@ -7,7 +7,7 @@ CMD ["bash"]
 
 WORKDIR /work
 
-RUN apt update && apt install -y git curl jq make sqlite3 python
+RUN apt update && apt install -y git curl jq make sqlite3 python clang
 
 RUN go install github.com/cloudspannerecosystem/spanner-cli@latest
 RUN go install golang.org/x/tools/cmd/goimports@latest

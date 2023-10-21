@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	cloud.google.com/go/spanner v1.46.0
+	github.com/goccy/go-zetasql v0.5.1
 	github.com/mattn/go-sqlite3 v1.14.16
 	golang.org/x/exp v0.0.0-20230519143937-03e91628a987
 )
