@@ -8,9 +8,7 @@
       "extensions": [
         "donjayamanne.githistory",
         "streetsidesoftware.code-spell-checker",
-        "golang.go",
-        "bufbuild.vscode-buf",
-        "pbkit.vscode-pbkit"
+        "golang.go"
       ]
     }
   },
