@@ -5,7 +5,6 @@ go 1.20
 require (
 	cloud.google.com/go/spanner v1.46.0
 	github.com/Jumpaku/go-assert v1.0.0
-	github.com/goccy/go-zetasql v0.5.1
 	github.com/samber/lo v1.38.1
 )
 
@@ -42,5 +41,5 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/grpc v1.55.0 // indirect
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.30.0 // indirect
 )
