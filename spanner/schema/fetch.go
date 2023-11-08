@@ -30,14 +30,11 @@ type SchemaTable struct {
 	ForeignKeys []SchemaForeignKey `json:"foreign_key"`
 }
 
-type Queryer interface {
-	Query(ctx context.Context, statement spanner.Statement) *spanner.RowIterator
-}
 type fetcher struct {
-	queryer Queryer
+	queryer gf_spanner.Queryer
 }
 
-func NewFetcher(queryer Queryer) fetcher {
+func NewFetcher(queryer gf_spanner.Queryer) fetcher {
 	return fetcher{queryer: queryer}
 }
 
@@ -72,11 +69,11 @@ func (fetcher fetcher) Fetch(ctx context.Context, table string) (SchemaTable, er
 	return schemaTable, nil
 }
 
-func getTable(ctx context.Context, tx Queryer, table string) (SchemaTable, error) {
+func getTable(ctx context.Context, tx gf_spanner.Queryer, table string) (SchemaTable, error) {
 	sql := `--sql query table name and parent information
 SELECT
 	TABLE_NAME AS Name,
-	IF_NULL(PARENT_TABLE_NAME, "") AS Parent,
+	IFNULL(PARENT_TABLE_NAME, "") AS Parent,
 FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = @Table`
 	found, err := gf_spanner.ScanRowsStruct[SchemaTable](tx.Query(ctx, spanner.Statement{
@@ -92,7 +89,7 @@ WHERE TABLE_NAME = @Table`
 	return found[0], nil
 }
 
-func queryColumns(ctx context.Context, tx Queryer, table string) ([]SchemaColumn, error) {
+func queryColumns(ctx context.Context, tx gf_spanner.Queryer, table string) ([]SchemaColumn, error) {
 	sql := `--sql query column information
 SELECT
 	COLUMN_NAME AS Name,
@@ -101,7 +98,6 @@ SELECT
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = @Table
 ORDER BY ORDINAL_POSITION`
-
 	columns, err := gf_spanner.ScanRowsStruct[SchemaColumn](tx.Query(ctx, spanner.Statement{
 		SQL:    sql,
 		Params: map[string]interface{}{"Table": table},
@@ -113,7 +109,7 @@ ORDER BY ORDINAL_POSITION`
 	return columns, nil
 }
 
-func queryPrimaryKey(ctx context.Context, tx Queryer, table string) ([]string, error) {
+func queryPrimaryKey(ctx context.Context, tx gf_spanner.Queryer, table string) ([]string, error) {
 	sql := `--sql query primary key information
 SELECT
 	kcu.COLUMN_NAME AS Name
@@ -134,7 +130,7 @@ ORDER BY kcu.ORDINAL_POSITION`
 	return lo.Map(primaryKey, func(it PrimaryKey, i int) string { return it.Name }), nil
 }
 
-func queryForeignKeys(ctx context.Context, tx Queryer, table string) ([]SchemaForeignKey, error) {
+func queryForeignKeys(ctx context.Context, tx gf_spanner.Queryer, table string) ([]SchemaForeignKey, error) {
 	sql := `--sql query foreign key information
 SELECT
 	tc.CONSTRAINT_NAME AS Name,
