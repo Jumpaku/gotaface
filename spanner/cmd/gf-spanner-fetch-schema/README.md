@@ -10,7 +10,7 @@ gf-spanner-fetch-schema [<option>|<argument>]... [-- [<argument>]...]
 
 ## Options:
 
-* `-format=<string>`, `-o=<string>`  (`default="json"`):
+* `-format=<string>` (`default="json"`):
     Specifies output format:
     * `json`: outputs in JSON format.
     * `sql`: outputs as DML statements. Note that the statements do not guarantee to reproduce the identical tables.
