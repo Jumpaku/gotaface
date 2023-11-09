@@ -1,11 +1,11 @@
-# gf-spanner-fetch-schema
+# gaf-spanner-fetch-schema
 
 Fetches schema data from a table in a Spanner database.
 
 ## Usage:
 
 ```sh
-gf-spanner-fetch-schema [<option>|<argument>]... [-- [<argument>]...]
+gaf-spanner-fetch-schema [<option>|<argument>]... [-- [<argument>]...]
 ```
 
 ## Options:
