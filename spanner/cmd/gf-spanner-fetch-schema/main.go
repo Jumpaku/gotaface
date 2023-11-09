@@ -15,6 +15,7 @@ import (
 	"github.com/Jumpaku/gotaface/spanner/schema"
 )
 
+//go:generate go run "github.com/Jumpaku/cyamli/cmd/cyamli@latest" golang -schema-path=cli.yaml -out-path=cli.gen.go
 func main() {
 	cli := NewCLI()
 	cli.Func = fetch

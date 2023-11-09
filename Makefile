@@ -15,22 +15,26 @@ lint: ## lint
 .PHONY: test
 test: ## test
 	go clean -testcache
-	sh spanner/tools/integration-test.sh
-	sh sqlite3/tools/integration-test.sh
-	go clean -testcache
 	go test -cover ./... -coverprofile=cover/cover.out && go tool cover -html=cover/cover.out -o cover/cover.html
+
+.PHONY: init-spanner
+init-spanner: ## initialize Spanner emulator database for develop. specify INSTANCE=<instance-name>. run in container gcloud
+	gcloud config set project gotaface
+	gcloud config set auth/disable_credentials true
+	yes | gcloud config set api_endpoint_overrides/spanner http://spanner:9020/
+	yes | gcloud spanner instances delete $(INSTANCE) || true
+	gcloud spanner instances create $(INSTANCE) --config=emulator-config --description="Instance for integration $(INSTANCE)"
 
 .PHONY: test-spanner
 test-spanner: ## run in container work
+	make init-spanner INSTANCE=test
 	SPANNER_EMULATOR_HOST=spanner:9010 \
 	GOTAFACE_TEST_SPANNER_PROJECT=gotaface \
 	GOTAFACE_TEST_SPANNER_INSTANCE=test \
 	go test ./spanner/schema/...
 
-.PHONY: init-spanner-test
-init-spanner-test: ## initialize Spanner emulator database for develop, run in container gcloud
-	gcloud config set project gotaface
-	gcloud config set auth/disable_credentials true
-	yes | gcloud config set api_endpoint_overrides/spanner http://spanner:9020/
-	yes | gcloud spanner instances delete test || true
-	gcloud spanner instances create test --config=emulator-config --description="Instance for integration test"
+.PHONY: example-spanner
+example-spanner: ## run in container work
+	make init-spanner INSTANCE=example
+	SPANNER_EMULATOR_HOST=spanner:9010 \
+	gcloud spanner databases create --instance=example db
