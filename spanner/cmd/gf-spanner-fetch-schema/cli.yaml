@@ -3,7 +3,6 @@ version: v0.0.1
 description: Fetches schema data from a table in a Spanner database.
 options:
   -format:
-    short: -o
     description: |
       Specifies output format:
        * json: outputs in JSON format.
@@ -12,7 +11,7 @@ options:
     default: json
 arguments:
   - name: data_source
-    description: 'Specifies data source in form "projects/<project>/instances/<instance>/databases/<database>"'
+    description: 'Specifies data source in form "projects/<project>/instances/<instance>/databases/<database>".'
   - name: target_tables
-    description: Specify target tables to be fetched schemas
+    description: Specify target tables to be fetched schemas.
     variadic: true
