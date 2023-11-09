@@ -1,5 +1,5 @@
 
-FROM golang:1.20.3-buster AS work-base
+FROM golang:1.21.4-bullseye AS work-base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -23,7 +23,7 @@ RUN go install golang.org/x/tools/cmd/goimports@latest
 #
 # ssh credentials (test user):
 #   user@password
-FROM golang:1.20.3-buster AS work-remote
+FROM golang:1.21.4-bullseye AS work-remote
 
 WORKDIR /
 COPY --from=work-base / ./

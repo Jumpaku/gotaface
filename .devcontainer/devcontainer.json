@@ -8,7 +8,8 @@
       "extensions": [
         "donjayamanne.githistory",
         "streetsidesoftware.code-spell-checker",
-        "golang.go"
+        "golang.go",
+        "jinliming2.vscode-go-template"
       ]
     }
   },

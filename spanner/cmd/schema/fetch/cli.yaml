@@ -1,0 +1,18 @@
+name: gf-spanner-schema-fetch
+version: v0.0.1
+description: Fetches schema data from a table in a Spanner database.
+options:
+  -format:
+    short: -o
+    description: |
+      Specifies output format:
+       * json: outputs in JSON format.
+       * sql: outputs as DML statements, which does not necessarily reproduce the identical tables.
+       * txt.tpl: processes template text from stdin in form Go's text/template and outputs result. Available data in the template is described in https://github.com/Jumpaku/gotaface/blob/main/spanner/schema/fetch.go#L25
+    default: json
+arguments:
+  - name: data_source
+    description: 'Specifies data source in form "projects/<project>/instances/<instance>/databases/<database>"'
+  - name: target_tables
+    description: Specify target tables to be fetched schemas
+    variadic: true
