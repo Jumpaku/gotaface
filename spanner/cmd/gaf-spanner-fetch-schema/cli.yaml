@@ -1,4 +1,4 @@
-name: gf-spanner-fetch-schema
+name: gaf-spanner-fetch-schema
 version: v0.0.1
 description: Fetches schema data from a table in a Spanner database.
 options:
