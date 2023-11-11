@@ -1,7 +1,11 @@
 name: gaf-spanner-fetch-schema
-version: v0.0.1
+version: v0.0.2
 description: Fetches schema data from a table in a Spanner database.
 options:
+  -help:
+    short: -h
+    description: Shows help.
+    type: boolean
   -format:
     description: |
       Specifies output format:

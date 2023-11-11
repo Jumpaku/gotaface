@@ -13,8 +13,10 @@ cloud.google.com/go/longrunning v0.4.1/go.mod h1:4iWDqhBZ70CvZ6BfETbvam3T8FMvLK+
 cloud.google.com/go/spanner v1.46.0 h1:9fACwvVl6051haRjNOZnyRaBEEQ7eRDWYDB7/JhVEu8=
 cloud.google.com/go/spanner v1.46.0/go.mod h1:H6RAuzCuV4Eba2rh4oay2izcO9HNFQkJK7X0bXcz/Ws=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Jumpaku/cyamli v0.0.4 h1:DVnmiXlDIRjfhVP6cWxlgQ7onDP+6MSZd5CyVjrCxZU=
-github.com/Jumpaku/cyamli v0.0.4/go.mod h1:MpJJdlA1aG2YZGsEJbltaX136GsDj9Ua36bkGUSDtLo=
+github.com/Jumpaku/cyamli v0.0.5 h1:WKJpJViR3IQ7RTc0NM6T8mJsCPGGo7wVE5YpxoE2xIQ=
+github.com/Jumpaku/cyamli v0.0.5/go.mod h1:MpJJdlA1aG2YZGsEJbltaX136GsDj9Ua36bkGUSDtLo=
+github.com/Jumpaku/cyamli v0.0.8 h1:WsMNer8HpvWfio2O/tsro0Rklyc1uhoiJOsaHZmwDS4=
+github.com/Jumpaku/cyamli v0.0.8/go.mod h1:+jCFK2TCbFNpCsRQ+mIY4N2MVNmZJ87o/w9kYRrGUVs=
 github.com/Jumpaku/go-assert v1.0.0 h1:0mrYBCxRHlHgnFh9+S/m8lKVMlK0Fvqq/V86k2CNZYY=
 github.com/Jumpaku/go-assert v1.0.0/go.mod h1:WUm/awdnfBic4hBSBk8Fiyqkv1Pm1P9zXQQG6kNtrNQ=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=

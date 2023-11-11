@@ -11,7 +11,7 @@ import (
 	"text/template"
 
 	"cloud.google.com/go/spanner"
-	cyamli_schema "github.com/Jumpaku/cyamli/schema"
+	"github.com/Jumpaku/cyamli/description"
 	"github.com/Jumpaku/gotaface/spanner/schema"
 )
 
@@ -27,7 +27,15 @@ func main() {
 //go:embed schema.sql.tpl
 var schemaSQL string
 
-func fetch(cmdSchema *cyamli_schema.Command, subcommand []string, input CLI_Input) (err error) {
+func fetch(subcommand []string, input CLI_Input, inputErr error) (err error) {
+	if inputErr != nil {
+		showSimpleDescription(subcommand, os.Stderr)
+		return fmt.Errorf("fail to resolve command line arguments: %w", inputErr)
+	}
+	if input.Opt_Help {
+		showDetailDescription(subcommand, os.Stdout)
+		return nil
+	}
 	ctx := context.Background()
 	client, err := spanner.NewClient(ctx, input.Arg_DataSource)
 	if err != nil {
@@ -80,4 +88,22 @@ func fetch(cmdSchema *cyamli_schema.Command, subcommand []string, input CLI_Inpu
 	}
 
 	return nil
+}
+
+func showSimpleDescription(subcommand []string, writer io.Writer) {
+	schema := LoadSchema()
+	_ = description.DescribeCommand(
+		description.SimpleExecutor(),
+		description.CreateCommandData(schema.Program.Name, schema.Program.Version, subcommand, schema.Find(subcommand)),
+		writer,
+	)
+}
+
+func showDetailDescription(subcommand []string, writer io.Writer) {
+	schema := LoadSchema()
+	_ = description.DescribeCommand(
+		description.DetailExecutor(),
+		description.CreateCommandData(schema.Program.Name, schema.Program.Version, subcommand, schema.Find(subcommand)),
+		writer,
+	)
 }

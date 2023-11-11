@@ -1,12 +1,10 @@
 module github.com/Jumpaku/gotaface
 
-go 1.21.0
-
-toolchain go1.21.4
+go 1.21.4
 
 require (
 	cloud.google.com/go/spanner v1.46.0
-	github.com/Jumpaku/cyamli v0.0.4
+	github.com/Jumpaku/cyamli v0.0.8
 	github.com/Jumpaku/go-assert v1.0.0
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.4
