@@ -19,6 +19,7 @@ var ddls = map[string][]string{
 	"ddl_03_foreign_loop_1": test.Split(testdata.DDL03ForeignLoop1SQL),
 	"ddl_04_foreign_loop_2": test.Split(testdata.DDL04ForeignLoop2SQL),
 	"ddl_05_foreign_loop_3": test.Split(testdata.DDL05ForeignLoop3SQL),
+	"ddl_06_unique_keys":    test.Split(testdata.DDL06UniqueKeysSQL),
 }
 
 func TestFetcher(t *testing.T) {
@@ -323,6 +324,37 @@ func TestFetcher(t *testing.T) {
 						ReferencedKey:   []string{"PK_21", "PK_22"},
 						ReferencingKey:  []string{"PK_31", "PK_32"},
 					},
+				},
+			},
+		},
+		{
+			ddl:   "ddl_06_unique_keys",
+			table: "T",
+			want: schema.SchemaTable{
+				Name: "T",
+				Columns: []schema.SchemaColumn{
+					{Name: "PK", Type: "INT64"},
+					{Name: "C1", Type: "INT64"},
+					{Name: "C2", Type: "INT64"},
+					{Name: "C3", Type: "INT64"},
+				},
+				PrimaryKey: []string{"PK"},
+				UniqueKeys: []schema.SchemaUniqueKey{
+					{Name: "UQ_T_C1", Key: []string{"C1"}},
+					{Name: "UQ_T_C1_C2", Key: []string{"C1", "C2"}},
+					{Name: "UQ_T_C1_C2_C3", Key: []string{"C1", "C2", "C3"}},
+					{Name: "UQ_T_C1_C3", Key: []string{"C1", "C3"}},
+					{Name: "UQ_T_C1_C3_C2", Key: []string{"C1", "C3", "C2"}},
+					{Name: "UQ_T_C2", Key: []string{"C2"}},
+					{Name: "UQ_T_C2_C1", Key: []string{"C2", "C1"}},
+					{Name: "UQ_T_C2_C1_C3", Key: []string{"C2", "C1", "C3"}},
+					{Name: "UQ_T_C2_C3", Key: []string{"C2", "C3"}},
+					{Name: "UQ_T_C2_C3_C1", Key: []string{"C2", "C3", "C1"}},
+					{Name: "UQ_T_C3", Key: []string{"C3"}},
+					{Name: "UQ_T_C3_C1", Key: []string{"C3", "C1"}},
+					{Name: "UQ_T_C3_C1_C2", Key: []string{"C3", "C1", "C2"}},
+					{Name: "UQ_T_C3_C2", Key: []string{"C3", "C2"}},
+					{Name: "UQ_T_C3_C2_C1", Key: []string{"C3", "C2", "C1"}},
 				},
 			},
 		},

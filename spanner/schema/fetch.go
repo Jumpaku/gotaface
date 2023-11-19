@@ -22,12 +22,17 @@ type SchemaForeignKey struct {
 	ReferencedKey   []string `json:"referenced_key"`
 	ReferencingKey  []string `json:"referencing_key"`
 }
+type SchemaUniqueKey struct {
+	Name string   `json:"name"`
+	Key  []string `json:"key"`
+}
 type SchemaTable struct {
 	Name        string             `json:"name"`
 	Columns     []SchemaColumn     `json:"columns"`
 	PrimaryKey  []string           `json:"primary_key"`
 	Parent      string             `json:"parent"`
 	ForeignKeys []SchemaForeignKey `json:"foreign_key"`
+	UniqueKeys  []SchemaUniqueKey  `json:"unique_key"`
 }
 
 type fetcher struct {
@@ -62,6 +67,11 @@ func (fetcher fetcher) Fetch(ctx context.Context, table string) (SchemaTable, er
 	}
 
 	schemaTable.ForeignKeys, err = queryForeignKeys(ctx, fetcher.queryer, table)
+	if err != nil {
+		return wrapError(err)
+	}
+
+	schemaTable.UniqueKeys, err = queryUniqueKeys(ctx, fetcher.queryer, table)
 	if err != nil {
 		return wrapError(err)
 	}
@@ -161,4 +171,38 @@ ORDER BY Name`
 		return nil, fmt.Errorf(`fail to get foreign keys of %s: %w`, table, err)
 	}
 	return foreignKeys, nil
+}
+
+func queryUniqueKeys(ctx context.Context, tx gf_spanner.Queryer, table string) ([]SchemaUniqueKey, error) {
+	sql := `--sql query unique key information
+WITH
+	EXCLUDE_FK_BACKING AS (
+		SELECT rc.UNIQUE_CONSTRAINT_NAME AS Name
+		FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+		JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc ON rc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+		JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc2 ON tc2.CONSTRAINT_NAME = rc.UNIQUE_CONSTRAINT_NAME AND tc2.CONSTRAINT_TYPE = 'UNIQUE'
+		WHERE tc.CONSTRAINT_TYPE = 'FOREIGN KEY'
+	)
+SELECT
+	idx.INDEX_NAME AS Name,
+	ARRAY(
+		SELECT idxc.COLUMN_NAME
+		FROM INFORMATION_SCHEMA.INDEX_COLUMNS idxc
+		WHERE idx.INDEX_NAME = idxc.INDEX_NAME
+		ORDER BY idxc.ORDINAL_POSITION
+	) AS Key
+FROM INFORMATION_SCHEMA.INDEXES idx
+WHERE
+	idx.IS_UNIQUE
+	AND INDEX_TYPE = "INDEX"
+	AND idx.INDEX_NAME NOT IN (SELECT Name FROM EXCLUDE_FK_BACKING)
+ORDER BY Name`
+	uniqueKeys, err := gf_spanner.ScanRowsStruct[SchemaUniqueKey](tx.Query(ctx, spanner.Statement{
+		SQL:    sql,
+		Params: map[string]interface{}{"Table": table},
+	}))
+	if err != nil {
+		return nil, fmt.Errorf(`fail to get foreign keys of %s: %w`, table, err)
+	}
+	return uniqueKeys, nil
 }

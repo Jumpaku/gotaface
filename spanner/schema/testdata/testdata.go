@@ -19,3 +19,6 @@ var DDL04ForeignLoop2SQL string
 
 //go:embed ddl_05_foreign_loop_3.sql
 var DDL05ForeignLoop3SQL string
+
+//go:embed ddl_06_unique_keys.sql
+var DDL06UniqueKeysSQL string
