@@ -27,12 +27,14 @@ init-spanner: ## initialize Spanner emulator database for develop. specify INSTA
 
 .PHONY: test-spanner
 test-spanner: ## run in container work
+	make init-spanner INSTANCE=test
 	SPANNER_EMULATOR_HOST=spanner:9010 \
 	GOTAFACE_TEST_SPANNER_PROJECT=gotaface \
 	GOTAFACE_TEST_SPANNER_INSTANCE=test \
 	go test ./spanner/schema/...
 
 .PHONY: example-spanner
-example-spanner: ## run in container work
+example-spanner: ## run in container gcloud
+	make init-spanner INSTANCE=example
 	SPANNER_EMULATOR_HOST=spanner:9010 \
-	gcloud spanner databases create --instance=example db
+	gcloud spanner databases create --instance=example example

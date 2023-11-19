@@ -7,7 +7,10 @@ CMD ["bash"]
 
 WORKDIR /work
 
-RUN apt update && apt install -y git curl jq make sqlite3 python clang
+RUN apt update && apt install -y git curl jq make sqlite3 python3 clang
+
+RUN curl -sSL https://sdk.cloud.google.com | bash
+ENV PATH $PATH:/root/google-cloud-sdk/bin
 
 RUN go install github.com/cloudspannerecosystem/spanner-cli@latest
 RUN go install golang.org/x/tools/cmd/goimports@latest

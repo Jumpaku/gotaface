@@ -1,5 +1,5 @@
 {{- /* Go Template */ -}}
-CREATE TABLE(
+CREATE TABLE {{.Name}}(
 {{- range $Index, $Column := .Columns -}}
     {{"\n    "}}{{$Column.Name}} {{$Column.Type}} {{- if (not $Column.Nullable) -}}{{" "}}NOT NULL{{- end -}},
 {{- end -}}
@@ -22,4 +22,12 @@ CREATE TABLE(
 {{- if .Parent -}}
     ,{{"\n    "}}INTERLEAVE IN PARENT {{.Parent}} ON DELETE CASCADE
 {{- end -}}
-;
+;{{"\n"}}
+
+{{- range $Index, $UniqueKey := .UniqueKeys -}}
+    CREATE UNIQUE INDEX {{$UniqueKey.Name}} ON {{.Name}} (
+    {{- range $Index, $Name := $UniqueKey.Key -}}
+        {{- if $Index -}},{{- end -}}{{$Name}}
+    {{- end -}}
+    );{{"\n"}}
+{{- end -}}

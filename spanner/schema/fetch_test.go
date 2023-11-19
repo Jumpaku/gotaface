@@ -30,9 +30,9 @@ func TestFetcher(t *testing.T) {
 	}{
 		{
 			ddl:   "ddl_00_all_types",
-			table: "T",
+			table: "A",
 			want: schema.SchemaTable{
-				Name: "T",
+				Name: "A",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK", Type: "INT64", Nullable: false},
 					{Name: "Col_01", Type: "BOOL", Nullable: true},
@@ -59,9 +59,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_01_interleave",
-			table: "T_1",
+			table: "B_1",
 			want: schema.SchemaTable{
-				Name: "T_1",
+				Name: "B_1",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_11", Type: "INT64"},
 				},
@@ -70,50 +70,50 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_01_interleave",
-			table: "T_2",
+			table: "B_2",
 			want: schema.SchemaTable{
-				Name: "T_2",
+				Name: "B_2",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_11", Type: "INT64"},
 					{Name: "PK_21", Type: "INT64"},
 				},
 				PrimaryKey: []string{"PK_11", "PK_21"},
-				Parent:     "T_1",
+				Parent:     "B_1",
 			},
 		},
 		{
 			ddl:   "ddl_01_interleave",
-			table: "T_3",
+			table: "B_3",
 			want: schema.SchemaTable{
-				Name: "T_3",
+				Name: "B_3",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_11", Type: "INT64"},
 					{Name: "PK_21", Type: "INT64"},
 					{Name: "PK_31", Type: "INT64"},
 				},
 				PrimaryKey: []string{"PK_11", "PK_21", "PK_31"},
-				Parent:     "T_2",
+				Parent:     "B_2",
 			},
 		},
 		{
 			ddl:   "ddl_01_interleave",
-			table: "T_4",
+			table: "B_4",
 			want: schema.SchemaTable{
-				Name: "T_4",
+				Name: "B_4",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_11", Type: "INT64"},
 					{Name: "PK_21", Type: "INT64"},
 					{Name: "PK_41", Type: "INT64"},
 				},
 				PrimaryKey: []string{"PK_11", "PK_21", "PK_41"},
-				Parent:     "T_2",
+				Parent:     "B_2",
 			},
 		},
 		{
 			ddl:   "ddl_02_foreign_keys",
-			table: "T_1",
+			table: "C_1",
 			want: schema.SchemaTable{
-				Name: "T_1",
+				Name: "C_1",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_11", Type: "INT64"},
 					{Name: "PK_12", Type: "INT64"},
@@ -123,9 +123,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_02_foreign_keys",
-			table: "T_2",
+			table: "C_2",
 			want: schema.SchemaTable{
-				Name: "T_2",
+				Name: "C_2",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_21", Type: "INT64"},
 					{Name: "PK_22", Type: "INT64"},
@@ -133,8 +133,8 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_21", "PK_22"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_2_1",
-						ReferencedTable: "T_1",
+						Name:            "FK_C_2_1",
+						ReferencedTable: "C_1",
 						ReferencedKey:   []string{"PK_11", "PK_12"},
 						ReferencingKey:  []string{"PK_21", "PK_22"},
 					},
@@ -143,9 +143,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_02_foreign_keys",
-			table: "T_3",
+			table: "C_3",
 			want: schema.SchemaTable{
-				Name: "T_3",
+				Name: "C_3",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_31", Type: "INT64"},
 					{Name: "PK_32", Type: "INT64"},
@@ -153,8 +153,8 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_31", "PK_32"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_3_2",
-						ReferencedTable: "T_2",
+						Name:            "FK_C_3_2",
+						ReferencedTable: "C_2",
 						ReferencedKey:   []string{"PK_21", "PK_22"},
 						ReferencingKey:  []string{"PK_31", "PK_32"},
 					},
@@ -163,9 +163,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_02_foreign_keys",
-			table: "T_4",
+			table: "C_4",
 			want: schema.SchemaTable{
-				Name: "T_4",
+				Name: "C_4",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_41", Type: "INT64"},
 					{Name: "PK_42", Type: "INT64"},
@@ -173,8 +173,8 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_41", "PK_42"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_4_2",
-						ReferencedTable: "T_2",
+						Name:            "FK_C_4_2",
+						ReferencedTable: "C_2",
 						ReferencedKey:   []string{"PK_21", "PK_22"},
 						ReferencingKey:  []string{"PK_41", "PK_42"},
 					},
@@ -183,9 +183,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_02_foreign_keys",
-			table: "T_5",
+			table: "C_5",
 			want: schema.SchemaTable{
-				Name: "T_5",
+				Name: "C_5",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_51", Type: "INT64"},
 					{Name: "PK_52", Type: "INT64"},
@@ -193,14 +193,14 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_51", "PK_52"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_5_3",
-						ReferencedTable: "T_3",
+						Name:            "FK_C_5_3",
+						ReferencedTable: "C_3",
 						ReferencedKey:   []string{"PK_31", "PK_32"},
 						ReferencingKey:  []string{"PK_51", "PK_52"},
 					},
 					{
-						Name:            "FK_5_4",
-						ReferencedTable: "T_4",
+						Name:            "FK_C_5_4",
+						ReferencedTable: "C_4",
 						ReferencedKey:   []string{"PK_41", "PK_42"},
 						ReferencingKey:  []string{"PK_51", "PK_52"},
 					},
@@ -209,9 +209,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_03_foreign_loop_1",
-			table: "T_1",
+			table: "D_1",
 			want: schema.SchemaTable{
-				Name: "T_1",
+				Name: "D_1",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_11", Type: "INT64"},
 					{Name: "PK_12", Type: "INT64"},
@@ -219,8 +219,8 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_11", "PK_12"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_1_1",
-						ReferencedTable: "T_1",
+						Name:            "FK_D_1_1",
+						ReferencedTable: "D_1",
 						ReferencedKey:   []string{"PK_12"},
 						ReferencingKey:  []string{"PK_11"},
 					},
@@ -229,9 +229,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_04_foreign_loop_2",
-			table: "T_1",
+			table: "E_1",
 			want: schema.SchemaTable{
-				Name: "T_1",
+				Name: "E_1",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_11", Type: "INT64"},
 					{Name: "PK_12", Type: "INT64"},
@@ -239,8 +239,8 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_11", "PK_12"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_1_2",
-						ReferencedTable: "T_2",
+						Name:            "FK_E_1_2",
+						ReferencedTable: "E_2",
 						ReferencedKey:   []string{"PK_21", "PK_22"},
 						ReferencingKey:  []string{"PK_11", "PK_12"},
 					},
@@ -249,9 +249,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_04_foreign_loop_2",
-			table: "T_2",
+			table: "E_2",
 			want: schema.SchemaTable{
-				Name: "T_2",
+				Name: "E_2",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_21", Type: "INT64"},
 					{Name: "PK_22", Type: "INT64"},
@@ -259,8 +259,8 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_21", "PK_22"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_2_1",
-						ReferencedTable: "T_1",
+						Name:            "FK_E_2_1",
+						ReferencedTable: "E_1",
 						ReferencedKey:   []string{"PK_11", "PK_12"},
 						ReferencingKey:  []string{"PK_21", "PK_22"},
 					},
@@ -269,9 +269,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_05_foreign_loop_3",
-			table: "T_1",
+			table: "F_1",
 			want: schema.SchemaTable{
-				Name: "T_1",
+				Name: "F_1",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_11", Type: "INT64"},
 					{Name: "PK_12", Type: "INT64"},
@@ -279,8 +279,8 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_11", "PK_12"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_1_3",
-						ReferencedTable: "T_3",
+						Name:            "FK_F_1_3",
+						ReferencedTable: "F_3",
 						ReferencedKey:   []string{"PK_31", "PK_32"},
 						ReferencingKey:  []string{"PK_11", "PK_12"},
 					},
@@ -289,9 +289,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_05_foreign_loop_3",
-			table: "T_2",
+			table: "F_2",
 			want: schema.SchemaTable{
-				Name: "T_2",
+				Name: "F_2",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_21", Type: "INT64"},
 					{Name: "PK_22", Type: "INT64"},
@@ -299,8 +299,8 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_21", "PK_22"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_2_1",
-						ReferencedTable: "T_1",
+						Name:            "FK_F_2_1",
+						ReferencedTable: "F_1",
 						ReferencedKey:   []string{"PK_11", "PK_12"},
 						ReferencingKey:  []string{"PK_21", "PK_22"},
 					},
@@ -309,9 +309,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_05_foreign_loop_3",
-			table: "T_3",
+			table: "F_3",
 			want: schema.SchemaTable{
-				Name: "T_3",
+				Name: "F_3",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK_31", Type: "INT64"},
 					{Name: "PK_32", Type: "INT64"},
@@ -319,8 +319,8 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_31", "PK_32"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_3_2",
-						ReferencedTable: "T_2",
+						Name:            "FK_F_3_2",
+						ReferencedTable: "F_2",
 						ReferencedKey:   []string{"PK_21", "PK_22"},
 						ReferencingKey:  []string{"PK_31", "PK_32"},
 					},
@@ -329,9 +329,9 @@ func TestFetcher(t *testing.T) {
 		},
 		{
 			ddl:   "ddl_06_unique_keys",
-			table: "T",
+			table: "G",
 			want: schema.SchemaTable{
-				Name: "T",
+				Name: "G",
 				Columns: []schema.SchemaColumn{
 					{Name: "PK", Type: "INT64"},
 					{Name: "C1", Type: "INT64"},
@@ -340,21 +340,21 @@ func TestFetcher(t *testing.T) {
 				},
 				PrimaryKey: []string{"PK"},
 				UniqueKeys: []schema.SchemaUniqueKey{
-					{Name: "UQ_T_C1", Key: []string{"C1"}},
-					{Name: "UQ_T_C1_C2", Key: []string{"C1", "C2"}},
-					{Name: "UQ_T_C1_C2_C3", Key: []string{"C1", "C2", "C3"}},
-					{Name: "UQ_T_C1_C3", Key: []string{"C1", "C3"}},
-					{Name: "UQ_T_C1_C3_C2", Key: []string{"C1", "C3", "C2"}},
-					{Name: "UQ_T_C2", Key: []string{"C2"}},
-					{Name: "UQ_T_C2_C1", Key: []string{"C2", "C1"}},
-					{Name: "UQ_T_C2_C1_C3", Key: []string{"C2", "C1", "C3"}},
-					{Name: "UQ_T_C2_C3", Key: []string{"C2", "C3"}},
-					{Name: "UQ_T_C2_C3_C1", Key: []string{"C2", "C3", "C1"}},
-					{Name: "UQ_T_C3", Key: []string{"C3"}},
-					{Name: "UQ_T_C3_C1", Key: []string{"C3", "C1"}},
-					{Name: "UQ_T_C3_C1_C2", Key: []string{"C3", "C1", "C2"}},
-					{Name: "UQ_T_C3_C2", Key: []string{"C3", "C2"}},
-					{Name: "UQ_T_C3_C2_C1", Key: []string{"C3", "C2", "C1"}},
+					{Name: "UQ_G_C1", Key: []string{"C1"}},
+					{Name: "UQ_G_C1_C2", Key: []string{"C1", "C2"}},
+					{Name: "UQ_G_C1_C2_C3", Key: []string{"C1", "C2", "C3"}},
+					{Name: "UQ_G_C1_C3", Key: []string{"C1", "C3"}},
+					{Name: "UQ_G_C1_C3_C2", Key: []string{"C1", "C3", "C2"}},
+					{Name: "UQ_G_C2", Key: []string{"C2"}},
+					{Name: "UQ_G_C2_C1", Key: []string{"C2", "C1"}},
+					{Name: "UQ_G_C2_C1_C3", Key: []string{"C2", "C1", "C3"}},
+					{Name: "UQ_G_C2_C3", Key: []string{"C2", "C3"}},
+					{Name: "UQ_G_C2_C3_C1", Key: []string{"C2", "C3", "C1"}},
+					{Name: "UQ_G_C3", Key: []string{"C3"}},
+					{Name: "UQ_G_C3_C1", Key: []string{"C3", "C1"}},
+					{Name: "UQ_G_C3_C1_C2", Key: []string{"C3", "C1", "C2"}},
+					{Name: "UQ_G_C3_C2", Key: []string{"C3", "C2"}},
+					{Name: "UQ_G_C3_C2_C1", Key: []string{"C3", "C2", "C1"}},
 				},
 			},
 		},
