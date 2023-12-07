@@ -10,9 +10,12 @@ options:
     description: |
       Specifies output format:
        * json: outputs in JSON format.
-       * sql: outputs as DML statements, which does not necessarily reproduce the identical tables.
        * txt.tpl: processes template text from stdin in form Go's text/template and outputs result. Available data in the template is described in https://github.com/Jumpaku/gotaface/blob/main/spanner/schema/fetch.go#L25
     default: json
+  -input-txt-tpl:
+    description: Specifies input template file. It can be used with -format=txt.tpl. The stdin is specified in default.
+  -output:
+    description: Specifies output path. The stdout is specified in default.
 arguments:
   - name: data_source
     description: 'Specifies data source in form "projects/<project>/instances/<instance>/databases/<database>".'

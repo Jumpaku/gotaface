@@ -22,7 +22,9 @@ init-spanner: ## initialize Spanner emulator database for develop. specify INSTA
 	gcloud config set project gotaface
 	gcloud config set auth/disable_credentials true
 	yes | gcloud config set api_endpoint_overrides/spanner http://spanner:9020/
+	SPANNER_EMULATOR_HOST=spanner:9010 \
 	yes | gcloud spanner instances delete $(INSTANCE) || true
+	SPANNER_EMULATOR_HOST=spanner:9010 \
 	gcloud spanner instances create $(INSTANCE) --config=emulator-config --description="Instance for integration $(INSTANCE)"
 
 .PHONY: test-spanner
