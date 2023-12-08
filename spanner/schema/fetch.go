@@ -203,7 +203,7 @@ ORDER BY Name`
 		Params: map[string]interface{}{"Table": table},
 	}))
 	if err != nil {
-		return nil, fmt.Errorf(`fail to get foreign keys of %s: %w`, table, err)
+		return nil, fmt.Errorf(`fail to get unique keys of %s: %w`, table, err)
 	}
 	return uniqueKeys, nil
 }
