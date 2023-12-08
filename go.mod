@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/spanner v1.46.0
 	github.com/Jumpaku/go-assert v1.0.0
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.4
 )
@@ -39,7 +40,6 @@ require (
 	cloud.google.com/go/longrunning v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/mattn/go-sqlite3 v1.14.18 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect

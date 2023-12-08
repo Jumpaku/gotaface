@@ -3,6 +3,7 @@ package schema
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/Jumpaku/go-assert"
 	"github.com/Jumpaku/gotaface/schema"
@@ -17,7 +18,6 @@ type SchemaColumn struct {
 	Nullable bool   `json:"nullable"`
 }
 type SchemaForeignKey struct {
-	Name            string   `json:"name"`
 	ReferencedTable string   `json:"referenced_table"`
 	ReferencedKey   []string `json:"referenced_key"`
 	ReferencingKey  []string `json:"referencing_key"`
@@ -50,11 +50,9 @@ func (fetcher fetcher) Fetch(ctx context.Context, table string) (SchemaTable, er
 		return SchemaTable{}, fmt.Errorf(`fail to fetch schema of %s: %w`, table, err)
 	}
 
-	schemaTable, err := getTable(ctx, fetcher.queryer, table)
-	if err != nil {
-		return wrapError(err)
-	}
+	schemaTable := SchemaTable{Name: table}
 
+	var err error
 	schemaTable.Columns, err = queryColumns(ctx, fetcher.queryer, table)
 	if err != nil {
 		return wrapError(err)
@@ -78,136 +76,142 @@ func (fetcher fetcher) Fetch(ctx context.Context, table string) (SchemaTable, er
 	return schemaTable, nil
 }
 
-func getTable(ctx context.Context, tx gf_sqlite3.Queryer, table string) (SchemaTable, error) {
-	sql := `--sql query table name and parent information
-SELECT
-	TABLE_NAME AS Name,
-	IFNULL(PARENT_TABLE_NAME, "") AS Parent,
-FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_NAME = ?`
-	rows, err := tx.QueryxContext(ctx, sql, table)
-	if err != nil {
-		return SchemaTable{}, fmt.Errorf(`fail to get table %s: %w`, table, err)
-	}
-	found, err := gf_sqlite3.ScanRowsStruct[SchemaTable](rows)
-	if err != nil {
-		return SchemaTable{}, fmt.Errorf(`fail to get table %s: %w`, table, err)
-	}
-	if len(found) == 0 {
-		return SchemaTable{}, fmt.Errorf("table %q not found", table)
-	}
-	return found[0], nil
-}
-
 func queryColumns(ctx context.Context, tx gf_sqlite3.Queryer, table string) ([]SchemaColumn, error) {
 	sql := `--sql query column information
-SELECT
-	COLUMN_NAME AS Name,
-	SPANNER_TYPE AS Type,
-	(IS_NULLABLE = 'YES') AS Nullable,
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = ?
-ORDER BY ORDINAL_POSITION`
+SELECT 
+	"name" AS Name,
+	"type" AS Type,
+	"notnull" = 0 AS Nullable
+FROM pragma_table_info(?)
+ORDER BY "cid"`
 	rows, err := tx.QueryxContext(ctx, sql, table)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to get columns of %s: %w`, table, err)
 	}
-	columns, err := gf_sqlite3.ScanRowsStruct[SchemaColumn](rows)
+	type column struct {
+		Name     string `db:"Name"`
+		Type     string `db:"Type"`
+		Nullable bool   `db:"Nullable"`
+	}
+	columns, err := gf_sqlite3.ScanRowsStruct[column](rows)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to get columns of %s: %w`, table, err)
 	}
 
-	return columns, nil
+	return lo.Map(columns, func(column column, index int) SchemaColumn {
+		return SchemaColumn{
+			Name:     column.Name,
+			Type:     column.Type,
+			Nullable: column.Nullable,
+		}
+	}), nil
 }
 
 func queryPrimaryKey(ctx context.Context, tx gf_sqlite3.Queryer, table string) ([]string, error) {
 	sql := `--sql query primary key information
 SELECT
-	kcu.COLUMN_NAME AS Name
-FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS kcu
-	JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS tc
-	ON kcu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME 
-        AND kcu.TABLE_NAME = tc.TABLE_NAME
-WHERE kcu.TABLE_NAME = ? AND tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
-ORDER BY kcu.ORDINAL_POSITION`
-	type PrimaryKey struct{ Name string }
+	"name" AS Name
+FROM pragma_table_info(?)
+WHERE "pk" > 0
+ORDER BY "pk"`
+	type key struct {
+		Name string `db:"Name"`
+	}
 	rows, err := tx.QueryxContext(ctx, sql, table)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to get primary key of %s: %w`, table, err)
 	}
-	primaryKey, err := gf_sqlite3.ScanRowsStruct[PrimaryKey](rows)
+	primaryKey, err := gf_sqlite3.ScanRowsStruct[key](rows)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to get primary key of %s: %w`, table, err)
 	}
-	return lo.Map(primaryKey, func(it PrimaryKey, i int) string { return it.Name }), nil
+	return lo.Map(primaryKey, func(it key, i int) string { return it.Name }), nil
 }
 
 func queryForeignKeys(ctx context.Context, tx gf_sqlite3.Queryer, table string) ([]SchemaForeignKey, error) {
 	sql := `--sql query foreign key information
 SELECT
-	tc.CONSTRAINT_NAME AS Name,
-	ctu.TABLE_NAME AS ReferencedTable,
-	ARRAY(
-		SELECT kcu.COLUMN_NAME
-		FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu 
-		WHERE kcu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
-		ORDER BY kcu.ORDINAL_POSITION
-	) AS ReferencingKey,
-	ARRAY(
-		SELECT kcu.COLUMN_NAME
-		FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu 
-		WHERE kcu.CONSTRAINT_NAME = rc.UNIQUE_CONSTRAINT_NAME
-		ORDER BY kcu.ORDINAL_POSITION
-	) AS ReferencedKey
-FROM
-	INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
-	JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc ON rc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
-	JOIN INFORMATION_SCHEMA.CONSTRAINT_TABLE_USAGE ctu ON ctu.CONSTRAINT_NAME = rc.UNIQUE_CONSTRAINT_NAME
-WHERE tc.CONSTRAINT_TYPE = 'FOREIGN KEY' AND tc.TABLE_NAME = ?
-ORDER BY Name`
+	"id" AS Id,
+	"seq" AS Seq,
+	"table" AS ReferencedTable,
+	"from" AS ReferencingKey,
+	"to" AS ReferencedKey
+FROM pragma_foreign_key_list(?)
+ORDER BY "id", "seq"`
 	rows, err := tx.QueryxContext(ctx, sql, table)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to get foreign keys of %s: %w`, table, err)
 	}
-	foreignKeys, err := gf_sqlite3.ScanRowsStruct[SchemaForeignKey](rows)
+	type fkRow struct {
+		Id              int64  `db:"Id"`
+		Seq             int64  `db:"Seq"`
+		ReferencedTable string `db:"ReferencedTable"`
+		ReferencingKey  string `db:"ReferencingKey"`
+		ReferencedKey   string `db:"ReferencedKey"`
+	}
+	fkRows, err := gf_sqlite3.ScanRowsStruct[fkRow](rows)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to get foreign keys of %s: %w`, table, err)
 	}
+
+	group := lo.GroupBy(fkRows, func(fkRow fkRow) int64 { return fkRow.Id })
+	groupIDs := lo.MapToSlice(group, func(id int64, _ []fkRow) int64 { return id })
+	slices.Sort(groupIDs)
+
+	var foreignKeys []SchemaForeignKey
+	for _, id := range groupIDs {
+		g := group[id]
+		foreignKeys = append(foreignKeys, SchemaForeignKey{
+			ReferencedTable: g[0].ReferencedTable,
+			ReferencedKey:   lo.Map(g, func(fkRow fkRow, _ int) string { return fkRow.ReferencedKey }),
+			ReferencingKey:  lo.Map(g, func(fkRow fkRow, _ int) string { return fkRow.ReferencingKey }),
+		})
+	}
+
 	return foreignKeys, nil
 }
 
 func queryUniqueKeys(ctx context.Context, tx gf_sqlite3.Queryer, table string) ([]SchemaUniqueKey, error) {
 	sql := `--sql query unique key information
-WITH
-	EXCLUDE_FK_BACKING AS (
-		SELECT rc.UNIQUE_CONSTRAINT_NAME AS Name
-		FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
-		JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc ON rc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
-		JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc2 ON tc2.CONSTRAINT_NAME = rc.UNIQUE_CONSTRAINT_NAME AND tc2.CONSTRAINT_TYPE = 'UNIQUE'
-		WHERE tc.CONSTRAINT_TYPE = 'FOREIGN KEY'
-	)
-SELECT
-	idx.INDEX_NAME AS Name,
-	ARRAY(
-		SELECT idxc.COLUMN_NAME
-		FROM INFORMATION_SCHEMA.INDEX_COLUMNS idxc
-		WHERE idx.INDEX_NAME = idxc.INDEX_NAME
-		ORDER BY idxc.ORDINAL_POSITION
-	) AS Key
-FROM INFORMATION_SCHEMA.INDEXES idx
-WHERE
-	idx.TABLE_NAME = ?
-	AND idx.IS_UNIQUE
-	AND INDEX_TYPE = "INDEX"
-	AND idx.INDEX_NAME NOT IN (SELECT Name FROM EXCLUDE_FK_BACKING)
-ORDER BY Name`
+SELECT 
+    pil."seq" AS Seq,
+    pil."name" AS Name,
+    pil."origin" = "c" AS Named,
+    pii."name" AS ColName
+FROM pragma_index_info(pil.name) AS pii
+    JOIN pragma_index_list(?) AS pil
+WHERE pil."unique" AND (pil."origin" = "c" OR pil."origin" = "u")
+ORDER BY pil."seq", pii."seqno"`
 	rows, err := tx.QueryxContext(ctx, sql, table)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to get unique keys of %s: %w`, table, err)
 	}
-	uniqueKeys, err := gf_sqlite3.ScanRowsStruct[SchemaUniqueKey](rows)
+	type ukRow struct {
+		Seq     int64  `db:"Seq"`
+		Name    string `db:"Name"`
+		Named   bool   `db:"Named"`
+		ColName string `db:"ColName"`
+	}
+	ukRows, err := gf_sqlite3.ScanRowsStruct[ukRow](rows)
 	if err != nil {
 		return nil, fmt.Errorf(`fail to get unique keys of %s: %w`, table, err)
 	}
+	group := lo.GroupBy(ukRows, func(ukRow ukRow) int64 { return ukRow.Seq })
+	groupIDs := lo.MapToSlice(group, func(id int64, _ []ukRow) int64 { return id })
+	slices.Sort(groupIDs)
+
+	var uniqueKeys []SchemaUniqueKey
+	for _, id := range groupIDs {
+		g := group[id]
+		uk := SchemaUniqueKey{
+			Key: lo.Map(g, func(ukRow ukRow, _ int) string { return ukRow.ColName }),
+		}
+		if g[0].Named {
+			uk.Name = g[0].Name
+		}
+
+		uniqueKeys = append(uniqueKeys, uk)
+	}
+
 	return uniqueKeys, nil
 }

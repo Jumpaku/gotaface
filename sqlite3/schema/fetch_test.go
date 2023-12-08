@@ -9,16 +9,19 @@ import (
 	"github.com/Jumpaku/gotaface/sqlite3/schema"
 	"github.com/Jumpaku/gotaface/sqlite3/schema/testdata"
 	"github.com/Jumpaku/gotaface/sqlite3/test"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
 
 var ddls = map[string]string{
-	"ddl_00_all_types":      testdata.DDL00AllTypesSQL,
-	"ddl_02_foreign_keys":   testdata.DDL02ForeignKeysSQL,
-	"ddl_03_foreign_loop_1": testdata.DDL03ForeignLoop1SQL,
-	"ddl_04_foreign_loop_2": testdata.DDL04ForeignLoop2SQL,
-	"ddl_05_foreign_loop_3": testdata.DDL05ForeignLoop3SQL,
-	"ddl_06_unique_keys":    testdata.DDL06UniqueKeysSQL,
+	"ddl_00_all_types":              testdata.DDL00AllTypesSQL,
+	"ddl_02_foreign_keys":           testdata.DDL02ForeignKeysSQL,
+	"ddl_03_foreign_loop_1":         testdata.DDL03ForeignLoop1SQL,
+	"ddl_04_foreign_loop_2":         testdata.DDL04ForeignLoop2SQL,
+	"ddl_05_foreign_loop_3":         testdata.DDL05ForeignLoop3SQL,
+	"ddl_06_unique_keys_index":      testdata.DDL06UniqueKeysIndexSQL,
+	"ddl_07_unique_keys_constraint": testdata.DDL07UniqueKeysConstraintSQL,
+	"ddl_08_unique_keys_column":     testdata.DDL08UniqueKeysColumnSQL,
 }
 
 func TestFetcher(t *testing.T) {
@@ -57,17 +60,6 @@ func TestFetcher(t *testing.T) {
 			},
 		},
 		{
-			ddl:   "ddl_01_interleave",
-			table: "B_1",
-			want: schema.SchemaTable{
-				Name: "B_1",
-				Columns: []schema.SchemaColumn{
-					{Name: "PK_11", Type: "INT64"},
-				},
-				PrimaryKey: []string{"PK_11"},
-			},
-		},
-		{
 			ddl:   "ddl_02_foreign_keys",
 			table: "C_1",
 			want: schema.SchemaTable{
@@ -91,7 +83,6 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_21", "PK_22"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_C_2_1",
 						ReferencedTable: "C_1",
 						ReferencedKey:   []string{"PK_11", "PK_12"},
 						ReferencingKey:  []string{"PK_21", "PK_22"},
@@ -111,7 +102,6 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_31", "PK_32"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_C_3_2",
 						ReferencedTable: "C_2",
 						ReferencedKey:   []string{"PK_21", "PK_22"},
 						ReferencingKey:  []string{"PK_31", "PK_32"},
@@ -131,7 +121,6 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_41", "PK_42"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_C_4_2",
 						ReferencedTable: "C_2",
 						ReferencedKey:   []string{"PK_21", "PK_22"},
 						ReferencingKey:  []string{"PK_41", "PK_42"},
@@ -151,15 +140,13 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_51", "PK_52"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_C_5_3",
-						ReferencedTable: "C_3",
-						ReferencedKey:   []string{"PK_31", "PK_32"},
+						ReferencedTable: "C_4",
+						ReferencedKey:   []string{"PK_41", "PK_42"},
 						ReferencingKey:  []string{"PK_51", "PK_52"},
 					},
 					{
-						Name:            "FK_C_5_4",
-						ReferencedTable: "C_4",
-						ReferencedKey:   []string{"PK_41", "PK_42"},
+						ReferencedTable: "C_3",
+						ReferencedKey:   []string{"PK_31", "PK_32"},
 						ReferencingKey:  []string{"PK_51", "PK_52"},
 					},
 				},
@@ -177,7 +164,6 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_11", "PK_12"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_D_1_1",
 						ReferencedTable: "D_1",
 						ReferencedKey:   []string{"PK_12"},
 						ReferencingKey:  []string{"PK_11"},
@@ -197,7 +183,6 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_11", "PK_12"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_E_1_2",
 						ReferencedTable: "E_2",
 						ReferencedKey:   []string{"PK_21", "PK_22"},
 						ReferencingKey:  []string{"PK_11", "PK_12"},
@@ -217,7 +202,6 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_21", "PK_22"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_E_2_1",
 						ReferencedTable: "E_1",
 						ReferencedKey:   []string{"PK_11", "PK_12"},
 						ReferencingKey:  []string{"PK_21", "PK_22"},
@@ -237,7 +221,6 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_11", "PK_12"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_F_1_3",
 						ReferencedTable: "F_3",
 						ReferencedKey:   []string{"PK_31", "PK_32"},
 						ReferencingKey:  []string{"PK_11", "PK_12"},
@@ -257,7 +240,6 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_21", "PK_22"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_F_2_1",
 						ReferencedTable: "F_1",
 						ReferencedKey:   []string{"PK_11", "PK_12"},
 						ReferencingKey:  []string{"PK_21", "PK_22"},
@@ -277,7 +259,6 @@ func TestFetcher(t *testing.T) {
 				PrimaryKey: []string{"PK_31", "PK_32"},
 				ForeignKeys: []schema.SchemaForeignKey{
 					{
-						Name:            "FK_F_3_2",
 						ReferencedTable: "F_2",
 						ReferencedKey:   []string{"PK_21", "PK_22"},
 						ReferencingKey:  []string{"PK_31", "PK_32"},
@@ -286,7 +267,7 @@ func TestFetcher(t *testing.T) {
 			},
 		},
 		{
-			ddl:   "ddl_06_unique_keys",
+			ddl:   "ddl_06_unique_keys_index",
 			table: "G",
 			want: schema.SchemaTable{
 				Name: "G",
@@ -316,22 +297,77 @@ func TestFetcher(t *testing.T) {
 				},
 			},
 		},
+		{
+			ddl:   "ddl_07_unique_keys_constraint",
+			table: "H",
+			want: schema.SchemaTable{
+				Name: "H",
+				Columns: []schema.SchemaColumn{
+					{Name: "PK", Type: "INT64"},
+					{Name: "C1", Type: "INT64"},
+					{Name: "C2", Type: "INT64"},
+					{Name: "C3", Type: "INT64"},
+				},
+				PrimaryKey: []string{"PK"},
+				UniqueKeys: []schema.SchemaUniqueKey{
+					{Name: "", Key: []string{"C1"}},
+					{Name: "", Key: []string{"C1", "C2"}},
+					{Name: "", Key: []string{"C1", "C2", "C3"}},
+					{Name: "", Key: []string{"C1", "C3"}},
+					{Name: "", Key: []string{"C1", "C3", "C2"}},
+					{Name: "", Key: []string{"C2"}},
+					{Name: "", Key: []string{"C2", "C1"}},
+					{Name: "", Key: []string{"C2", "C1", "C3"}},
+					{Name: "", Key: []string{"C2", "C3"}},
+					{Name: "", Key: []string{"C2", "C3", "C1"}},
+					{Name: "", Key: []string{"C3"}},
+					{Name: "", Key: []string{"C3", "C1"}},
+					{Name: "", Key: []string{"C3", "C1", "C2"}},
+					{Name: "", Key: []string{"C3", "C2"}},
+					{Name: "", Key: []string{"C3", "C2", "C1"}},
+				},
+			},
+		},
+		{
+			ddl:   "ddl_08_unique_keys_column",
+			table: "I",
+			want: schema.SchemaTable{
+				Name: "I",
+				Columns: []schema.SchemaColumn{
+					{Name: "PK", Type: "INT64"},
+					{Name: "C1", Type: "INT64"},
+					{Name: "C2", Type: "INT64"},
+					{Name: "C3", Type: "INT64"},
+				},
+				PrimaryKey: []string{"PK"},
+				UniqueKeys: []schema.SchemaUniqueKey{
+					{Name: "", Key: []string{"C1"}},
+					{Name: "", Key: []string{"C2"}},
+					{Name: "", Key: []string{"C3"}},
+				},
+			},
+		},
 	}
 
 	for number, testcase := range testcases {
 		t.Run(fmt.Sprintf("%03d:%s[%s]", number, testcase.ddl, testcase.table), func(t *testing.T) {
-			database := fmt.Sprintf("fetcher_%0d", number)
-			db, teardown := test.Setup(t, database)
+			db, teardown := test.Setup(t, fmt.Sprintf("fetcher_%0d.sqlite", number))
 			defer teardown()
 
 			test.InitDDLs(t, db, []string{ddls[testcase.ddl]})
 
-			ctx := context.Background()
-
 			sut := schema.NewFetcher(db)
-			got, err := sut.Fetch(ctx, testcase.table)
+			got, err := sut.Fetch(context.Background(), testcase.table)
 			assert.Nil(t, err)
-			assert.Equal(t, testcase.want, got)
+			assertEqualSchemaTable(t, testcase.want, got)
 		})
 	}
+}
+func assertEqualSchemaTable(t *testing.T, want schema.SchemaTable, got schema.SchemaTable) {
+	t.Helper()
+	assert.Equal(t, want.Name, got.Name)
+	assert.Equal(t, want.PrimaryKey, got.PrimaryKey)
+	assert.Equal(t, want.Columns, got.Columns)
+	assert.ElementsMatch(t, want.ForeignKeys, got.ForeignKeys)
+	assert.ElementsMatch(t, want.UniqueKeys, got.UniqueKeys)
 }

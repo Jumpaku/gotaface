@@ -3,28 +3,24 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 type Func[Input any] func(subcommand []string, input Input, inputErr error) (err error)
 
-
-
-
-
 type CLI struct {
-
 	FUNC Func[CLI_Input]
 }
+
 func (CLI) DESC_Simple() string {
-	return "gaf-spanner-fetch-schema (v0.0.2):\nFetches schema data from a table in a Spanner database.\n\nUsage:\n    $ gaf-spanner-fetch-schema [<option>|<argument>]... [-- [<argument>]...]\n\nOptions:\n    -format, -help, -input-txt-tpl, -output\n\nArguments:\n    <data_source> <target_tables>...\n\n"
+	return "gaf-sqlite3-fetch-schema (v0.0.2):\nFetches schema data from a table in a SQLite3 database.\n\nUsage:\n    $ gaf-sqlite3-fetch-schema [<option>|<argument>]... [-- [<argument>]...]\n\nOptions:\n    -format, -help, -input-txt-tpl, -output\n\nArguments:\n    <data_source> <target_tables>...\n\n"
 }
 func (CLI) DESC_Detail() string {
-	return "gaf-spanner-fetch-schema (v0.0.2):\nFetches schema data from a table in a Spanner database.\n\nUsage:\n    $ gaf-spanner-fetch-schema [<option>|<argument>]... [-- [<argument>]...]\n\n\nOptions:\n    -format=<string>  (default=\"json\"):\n        Specifies output format:\n         * json: outputs in JSON format.\n         * txt.tpl: processes template text from stdin in form Go's text/template and outputs result. Available data in the template is described in https://github.com/Jumpaku/gotaface/blob/main/spanner/schema/fetch.go#L25\n\n    -help[=<boolean>], -h[=<boolean>]  (default=false):\n        Shows help.\n\n    -input-txt-tpl=<string>  (default=\"\"):\n        Specifies input template file. It can be used with -format=txt.tpl. The stdin is specified in default.\n\n    -output=<string>  (default=\"\"):\n        Specifies output path. The stdout is specified in default.\n\n\nArguments:\n    [0]  <data_source:string>\n        Specifies data source in form \"projects/<project>/instances/<instance>/databases/<database>\".\n\n    [1:] [<target_tables:string>]...\n        Specify target tables to be fetched schemas.\n\n"
+	return "gaf-sqlite3-fetch-schema (v0.0.2):\nFetches schema data from a table in a SQLite3 database.\n\nUsage:\n    $ gaf-sqlite3-fetch-schema [<option>|<argument>]... [-- [<argument>]...]\n\n\nOptions:\n    -format=<string>  (default=\"json\"):\n        Specifies output format:\n         * json: outputs in JSON format.\n         * txt.tpl: processes template text from stdin in form Go's text/template and outputs result. Available data in the template is described in https://github.com/Jumpaku/gotaface/blob/main/sqlite3/schema/fetch.go#L25\n\n    -help[=<boolean>], -h[=<boolean>]  (default=false):\n        Shows help.\n\n    -input-txt-tpl=<string>  (default=\"\"):\n        Specifies input template file. It can be used with -format=txt.tpl. The stdin is specified in default.\n\n    -output=<string>  (default=\"\"):\n        Specifies output path. The stdout is specified in default.\n\n\nArguments:\n    [0]  <data_source:string>\n        Specifies path to SQLite3 database file.\n\n    [1:] [<target_tables:string>]...\n        Specify target tables to be fetched schemas.\n\n"
 }
-type CLI_Input struct {
 
+type CLI_Input struct {
 	Opt_Format string
 
 	Opt_Help bool
@@ -33,23 +29,21 @@ type CLI_Input struct {
 
 	Opt_Output string
 
-
 	Arg_DataSource string
 
 	Arg_TargetTables []string
-
 }
+
 func resolve_CLI_Input(input *CLI_Input, restArgs []string) error {
 	*input = CLI_Input{
-	
+
 		Opt_Format: "json",
-	
+
 		Opt_Help: false,
-	
+
 		Opt_InputTxtTpl: "",
-	
+
 		Opt_Output: "",
-	
 	}
 
 	var arguments []string
@@ -68,79 +62,66 @@ func resolve_CLI_Input(input *CLI_Input, restArgs []string) error {
 		switch optName {
 		default:
 			return fmt.Errorf("unknown option %q", optName)
-		
+
 		case "-format":
 			if !cut {
 				return fmt.Errorf("value is not specified to option %q", optName)
-				
+
 			}
 			if err := parseValue(&input.Opt_Format, lit); err != nil {
 				return fmt.Errorf("value %q is not assignable to option %q", lit, optName)
 			}
-		
+
 		case "-help", "-h":
 			if !cut {
 				lit = "true"
-				
+
 			}
 			if err := parseValue(&input.Opt_Help, lit); err != nil {
 				return fmt.Errorf("value %q is not assignable to option %q", lit, optName)
 			}
-		
+
 		case "-input-txt-tpl":
 			if !cut {
 				return fmt.Errorf("value is not specified to option %q", optName)
-				
+
 			}
 			if err := parseValue(&input.Opt_InputTxtTpl, lit); err != nil {
 				return fmt.Errorf("value %q is not assignable to option %q", lit, optName)
 			}
-		
+
 		case "-output":
 			if !cut {
 				return fmt.Errorf("value is not specified to option %q", optName)
-				
+
 			}
 			if err := parseValue(&input.Opt_Output, lit); err != nil {
 				return fmt.Errorf("value %q is not assignable to option %q", lit, optName)
 			}
-		
+
 		}
 	}
 
-	
-		
-		if len(arguments) <= 0 {
-			return fmt.Errorf("too few arguments")
-		}
-		if err := parseValue(&input.Arg_DataSource, arguments[0]); err != nil {
-			return fmt.Errorf("value is not assignable to argument at [%d]", 0)
-		}
-		
-	
-		
-		if len(arguments) <= 1 - 1 {
-			return fmt.Errorf("too few arguments")
-		}
-		if err := parseValue(&input.Arg_TargetTables, arguments[1:]...); err != nil {
-			return fmt.Errorf("values [%s] are not assignable to arguments at [%d:]", strings.Join(arguments[1:], " "), 1)
-		}
-		
-	
+	if len(arguments) <= 0 {
+		return fmt.Errorf("too few arguments")
+	}
+	if err := parseValue(&input.Arg_DataSource, arguments[0]); err != nil {
+		return fmt.Errorf("value is not assignable to argument at [%d]", 0)
+	}
+
+	if len(arguments) <= 1-1 {
+		return fmt.Errorf("too few arguments")
+	}
+	if err := parseValue(&input.Arg_TargetTables, arguments[1:]...); err != nil {
+		return fmt.Errorf("values [%s] are not assignable to arguments at [%d:]", strings.Join(arguments[1:], " "), 1)
+	}
 
 	return nil
 }
 
-
-
-
-
-
-
 func NewCLI() CLI {
 	return CLI{}
 }
-
 
 func Run(cli CLI, args []string) error {
 	subcommandPath, restArgs := resolveSubcommand(args)
@@ -155,19 +136,16 @@ func Run(cli CLI, args []string) error {
 		err := resolve_CLI_Input(&input, restArgs)
 		return funcMethod(subcommandPath, input, err)
 
-
 	}
 	return nil
 }
-
 
 func resolveSubcommand(args []string) (subcommandPath []string, restArgs []string) {
 	if len(args) == 0 {
 		panic("command line arguments are too few")
 	}
 	subcommandSet := map[string]bool{
-	"": true,
-	
+		"": true,
 	}
 
 	for _, arg := range args[1:] {
@@ -243,4 +221,4 @@ func parseValue(dstPtr any, strValue ...string) error {
 	return nil
 }
 
-func consumeVariables(...any){}
+func consumeVariables(...any) {}

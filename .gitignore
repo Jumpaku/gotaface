@@ -62,3 +62,4 @@ go.work
 
 cover
 !cover/.gitkeep
+/example.db

@@ -1,6 +1,6 @@
-name: gaf-spanner-fetch-schema
+name: gaf-sqlite3-fetch-schema
 version: v0.0.2
-description: Fetches schema data from a table in a Spanner database.
+description: Fetches schema data from a table in a SQLite3 database.
 options:
   -help:
     short: -h
@@ -10,7 +10,7 @@ options:
     description: |
       Specifies output format:
        * json: outputs in JSON format.
-       * txt.tpl: processes template text from stdin in form Go's text/template and outputs result. Available data in the template is described in https://github.com/Jumpaku/gotaface/blob/main/spanner/schema/fetch.go#L25
+       * txt.tpl: processes template text from stdin in form Go's text/template and outputs result. Available data in the template is described in https://github.com/Jumpaku/gotaface/blob/main/sqlite3/schema/fetch.go#L25
     default: json
   -input-txt-tpl:
     description: Specifies input template file. It can be used with -format=txt.tpl. The stdin is specified in default.
@@ -18,7 +18,7 @@ options:
     description: Specifies output path. The stdout is specified in default.
 arguments:
   - name: data_source
-    description: 'Specifies data source in form "projects/<project>/instances/<instance>/databases/<database>".'
+    description: 'Specifies path to SQLite3 database file.'
   - name: target_tables
     description: Specify target tables to be fetched schemas.
     variadic: true

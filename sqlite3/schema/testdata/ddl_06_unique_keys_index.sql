@@ -1,7 +1,4 @@
--- classDiagram
---     G_1 <|-- G_2
---     G_2 <|-- G_3
---     G_3 <|-- G_1
+
 CREATE TABLE G (
     PK INT64 NOT NULL,
     C1 INT64 NOT NULL,

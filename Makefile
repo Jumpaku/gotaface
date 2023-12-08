@@ -3,7 +3,7 @@
 
 .PHONY: help
 help: ## Show this help.
-	@grep -E '^[a-zA-Z_%-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%s\033[0m\n\t%s\n", $$1, $$2}'
+	@grep -E '^[0-9a-zA-Z_%-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%s\033[0m\n\t%s\n", $$1, $$2}'
 
 
 .PHONY: lint
@@ -40,3 +40,7 @@ example-spanner: ## run in container gcloud
 	make init-spanner INSTANCE=example
 	SPANNER_EMULATOR_HOST=spanner:9010 \
 	gcloud spanner databases create --instance=example example
+
+.PHONY: test-sqlite3
+test-sqlite3: ## test-sqlite3
+	GOTAFACE_TEST_SQLITE3=true go test ./sqlite3/schema/...

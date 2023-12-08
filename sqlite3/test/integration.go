@@ -13,8 +13,7 @@ import (
 func SkipIfNoEnv(t *testing.T) {
 	t.Helper()
 
-	database := GetEnvSQLite3()
-	if database == "" {
+	if GetEnvSQLite3() == "" {
 		t.Skipf(`environment variable %s are required`, EnvTestSQLite3)
 	}
 }
@@ -48,8 +47,9 @@ func InitDDLs(t *testing.T, db *sqlx.DB, stmts []string) {
 	defer tx.Rollback()
 
 	for _, stmt := range stmts {
-		_, err := tx.ExecContext(ctx, stmt)
-		t.Fatalf(`fail to execute ddl: %v`, err)
+		if _, err := tx.ExecContext(ctx, stmt); err != nil {
+			t.Fatalf(`fail to execute ddl: %v`, err)
+		}
 	}
 
 	tx.Commit()

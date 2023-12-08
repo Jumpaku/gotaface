@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 	"io"
 	"log"
 	"os"
 	"text/template"
 
-	"cloud.google.com/go/spanner"
-	"github.com/Jumpaku/gotaface/spanner/schema"
+	"github.com/Jumpaku/gotaface/sqlite3/schema"
 )
 
 //go:generate go run "github.com/Jumpaku/cyamli/cmd/cyamli@latest" golang -schema-path=cli.yaml -out-path=cli.gen.go
@@ -33,13 +34,13 @@ func fetch(subcommand []string, input CLI_Input, inputErr error) (err error) {
 		return nil
 	}
 	ctx := context.Background()
-	client, err := spanner.NewClient(ctx, input.Arg_DataSource)
+	dbx, err := sqlx.Open("sqlite3", input.Arg_DataSource)
 	if err != nil {
-		return fmt.Errorf("fail to create Spanner client: %w", err)
+		return fmt.Errorf("fail to open SQLite3 database: %w", err)
 	}
-	defer client.Close()
+	defer dbx.Close()
 
-	fetcher := schema.NewFetcher(client.ReadOnlyTransaction())
+	fetcher := schema.NewFetcher(dbx)
 
 	schemas := []schema.SchemaTable{}
 	for _, targetTable := range input.Arg_TargetTables {

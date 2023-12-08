@@ -1,4 +1,4 @@
-package spanner
+package sqlite3
 
 import "github.com/jmoiron/sqlx"
 
