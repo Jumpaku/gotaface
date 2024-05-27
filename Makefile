@@ -33,7 +33,7 @@ test-spanner: ## run in container work
 	SPANNER_EMULATOR_HOST=spanner:9010 \
 	GOTAFACE_TEST_SPANNER_PROJECT=gotaface \
 	GOTAFACE_TEST_SPANNER_INSTANCE=test \
-	go test ./spanner/schema/...
+	go test ./spanner/schema/... -data-source="projects/gotaface/instances/test/databases/schema"
 
 .PHONY: example-spanner
 example-spanner: ## run in container gcloud

@@ -2,7 +2,9 @@ package test
 
 import (
 	"context"
+	"flag"
 	"fmt"
+	"github.com/Jumpaku/sqanner/tokenize"
 	"strings"
 	"testing"
 
@@ -10,72 +12,73 @@ import (
 
 	spanner_admin "cloud.google.com/go/spanner/admin/database/apiv1"
 	spanner_adminpb "cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
-	gf_spanner "github.com/Jumpaku/gotaface/spanner"
 	"github.com/samber/lo"
 )
 
-func SkipIfNoEnv(t *testing.T) {
-	t.Helper()
+var DataSource = flag.String("data-source", "", "data source name")
 
-	project, instance := GetEnvSpanner()
-	if project == "" || instance == "" {
-		t.Skipf(`environment variables %s and %s are required`, EnvTestSpannerProject, EnvTestSpannerInstance)
+func SkipWithoutDataSource(t *testing.T) {
+	if *DataSource == "" {
+		t.Skipf("flag %q is not specified", "data-source")
 	}
 }
-
-func Setup(t *testing.T, database string) (adminClient *spanner_admin.DatabaseAdminClient, client *spanner.Client, teardown func()) {
+func Setup(t *testing.T) (adminClient *spanner_admin.DatabaseAdminClient, client *spanner.Client) {
 	t.Helper()
 
-	SkipIfNoEnv(t)
+	if *DataSource == "" {
+		t.Fatal("if flag -data-source is not set, it will be skipped")
+	}
 
 	ctx := context.Background()
-	project, instance := GetEnvSpanner()
 	adminClient, err := spanner_admin.NewDatabaseAdminClient(ctx)
 	if err != nil {
 		t.Fatalf(`fail to create spanner admin client: %v`, err)
 	}
+	t.Cleanup(func() { adminClient.Close() })
 
-	parent := fmt.Sprintf(`projects/%s/instances/%s`, project, instance)
+	err = adminClient.DropDatabase(ctx, &spanner_adminpb.DropDatabaseRequest{Database: *DataSource})
+	if err != nil {
+		t.Logf(`fail to drop spanner database %q: %v`, *DataSource, err)
+	}
+
+	splitDataSource := strings.Split(*DataSource, "/")
+	parent := strings.Join(splitDataSource[:4], "/")
+	database := splitDataSource[5]
+
 	op, err := adminClient.CreateDatabase(ctx, &spanner_adminpb.CreateDatabaseRequest{
 		Parent:          parent,
 		CreateStatement: fmt.Sprintf("CREATE DATABASE %s", database),
 	})
 	if err != nil {
-		adminClient.Close()
 		t.Fatalf(`fail to create spanner database in %q: %v`, parent, err)
 	}
 
-	dataSource := fmt.Sprintf(`%s/databases/%s`, parent, database)
 	if _, err := op.Wait(ctx); err != nil {
-		adminClient.DropDatabase(ctx, &spanner_adminpb.DropDatabaseRequest{Database: dataSource})
-		adminClient.Close()
-		t.Fatalf(`fail to wait create spanner database: %v`, err)
+		t.Fatalf(`fail to create spanner database in %q: %v`, parent, err)
 	}
+	t.Cleanup(func() { adminClient.DropDatabase(ctx, &spanner_adminpb.DropDatabaseRequest{Database: *DataSource}) })
 
-	client, err = spanner.NewClient(ctx, dataSource)
+	client, err = spanner.NewClient(ctx, *DataSource)
 	if err != nil {
-		adminClient.DropDatabase(ctx, &spanner_adminpb.DropDatabaseRequest{Database: dataSource})
-		adminClient.Close()
-		t.Fatalf(`fail to create spanner client with %q: %v`, dataSource, err)
+		t.Fatalf(`fail to create spanner client with %q: %v`, *DataSource, err)
 	}
+	t.Cleanup(func() { client.Close() })
 
-	teardown = func() {
-		client.Close()
-		adminClient.DropDatabase(ctx, &spanner_adminpb.DropDatabaseRequest{Database: dataSource})
-		adminClient.Close()
-	}
-
-	return adminClient, client, teardown
+	return adminClient, client
 }
 
 func InitDDLs(t *testing.T, adminClient *spanner_admin.DatabaseAdminClient, database string, stmts []string) {
 	t.Helper()
-	removeComment := func(stmt string, i int) string {
-		lines := strings.Split(stmt, "\n")
-		lines = lo.Filter(lines, func(line string, i int) bool {
-			return !(strings.HasPrefix(line, "--") || strings.HasPrefix(line, "//"))
-		})
-		return strings.Join(lines, " ")
+
+	removeComment := func(stmt string, _ int) string {
+		tokens, err := tokenize.Tokenize([]rune(stmt))
+		if err != nil {
+			panic(err)
+		}
+		tokens = lo.Filter(tokens, func(token tokenize.Token, _ int) bool { return token.Kind != tokenize.TokenComment })
+		return lo.Reduce(tokens, func(agg string, token tokenize.Token, _ int) string {
+			return agg + string(token.Content)
+		}, "")
 	}
 	ctx := context.Background()
 	ddl := &spanner_adminpb.UpdateDatabaseDdlRequest{
@@ -90,71 +93,4 @@ func InitDDLs(t *testing.T, adminClient *spanner_admin.DatabaseAdminClient, data
 	if err := op.Wait(ctx); err != nil {
 		t.Fatalf(`fail to wait create tables: %v`, err)
 	}
-}
-
-func InitDMLs(t *testing.T, client *spanner.Client, stmt []spanner.Statement) {
-	_, err := client.ReadWriteTransaction(context.Background(), func(ctx context.Context, tx *spanner.ReadWriteTransaction) error {
-		for _, stmt := range stmt {
-			_, err := tx.Update(ctx, stmt)
-			if err != nil {
-				return fmt.Errorf(`fail to insert rows: %w`, err)
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		t.Fatalf(`fail to wait create tables: %v`, err)
-	}
-}
-
-func ListRows[Row any](t *testing.T, tx gf_spanner.Queryer, from string) []*Row {
-	t.Helper()
-
-	stmt := fmt.Sprintf(`SELECT * FROM %s`, from)
-	itr := tx.Query(context.Background(), spanner.Statement{SQL: stmt})
-	rowsStruct := []*Row{}
-	err := itr.Do(func(r *spanner.Row) error {
-		var rowStruct Row
-		err := r.ToStructLenient(&rowStruct)
-		if err != nil {
-			return fmt.Errorf(`fail to scan row: %w`, err)
-		}
-		rowsStruct = append(rowsStruct, &rowStruct)
-		return nil
-	})
-	if err != nil {
-		t.Fatalf(`fail to query row: %v`, err)
-	}
-
-	return rowsStruct
-}
-
-func FindRow[Row any](t *testing.T, tx gf_spanner.Queryer, from string, where map[string]any) *Row {
-	t.Helper()
-
-	cond := " TRUE"
-	for key := range where {
-		cond += ` AND ` + key + ` = @` + key
-	}
-	stmt := fmt.Sprintf(`SELECT * FROM %s WHERE %s`, from, cond)
-	itr := tx.Query(context.Background(), spanner.Statement{SQL: stmt, Params: where})
-	rowsStruct := []*Row{}
-	err := itr.Do(func(r *spanner.Row) error {
-		var rowStruct Row
-		err := r.ToStructLenient(&rowStruct)
-		if err != nil {
-			return fmt.Errorf(`fail to scan row: %w`, err)
-		}
-		rowsStruct = append(rowsStruct, &rowStruct)
-		return nil
-	})
-	if err != nil {
-		t.Fatalf(`fail to query row: %v`, err)
-	}
-
-	if len(rowsStruct) == 0 {
-		return nil
-	}
-
-	return rowsStruct[0]
 }

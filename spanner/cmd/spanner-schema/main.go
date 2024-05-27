@@ -41,7 +41,7 @@ func fetch(subcommand []string, input CLI_Input, inputErr error) (err error) {
 
 	fetcher := schema.NewFetcher(client.ReadOnlyTransaction())
 
-	schemas := []schema.SchemaTable{}
+	schemas := []schema.Table{}
 	for _, targetTable := range input.Arg_TargetTables {
 		result, err := fetcher.Fetch(ctx, targetTable)
 		if err != nil {

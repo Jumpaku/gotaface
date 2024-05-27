@@ -11,44 +11,20 @@ import (
 	"github.com/samber/lo"
 )
 
-type SchemaColumn struct {
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Nullable bool   `json:"nullable"`
-}
-type SchemaForeignKey struct {
-	Name            string   `json:"name"`
-	ReferencedTable string   `json:"referenced_table"`
-	ReferencedKey   []string `json:"referenced_key"`
-	ReferencingKey  []string `json:"referencing_key"`
-}
-type SchemaUniqueKey struct {
-	Name string   `json:"name"`
-	Key  []string `json:"key"`
-}
-type SchemaTable struct {
-	Name        string             `json:"name"`
-	Columns     []SchemaColumn     `json:"columns"`
-	PrimaryKey  []string           `json:"primary_key"`
-	Parent      string             `json:"parent"`
-	ForeignKeys []SchemaForeignKey `json:"foreign_key"`
-	UniqueKeys  []SchemaUniqueKey  `json:"unique_key"`
-}
-
 type fetcher struct {
 	queryer gf_spanner.Queryer
 }
 
-func NewFetcher(queryer gf_spanner.Queryer) fetcher {
+func NewFetcher(queryer gf_spanner.Queryer) schema.Fetcher[Table] {
 	return fetcher{queryer: queryer}
 }
 
-var _ schema.Fetcher[SchemaTable] = fetcher{}
+var _ schema.Fetcher[Table] = fetcher{}
 
-func (fetcher fetcher) Fetch(ctx context.Context, table string) (SchemaTable, error) {
-	wrapError := func(err error) (SchemaTable, error) {
+func (fetcher fetcher) Fetch(ctx context.Context, table string) (Table, error) {
+	wrapError := func(err error) (Table, error) {
 		assert.Params(err != nil, "wrapped error must be not nil")
-		return SchemaTable{}, fmt.Errorf(`fail to fetch schema of %s: %w`, table, err)
+		return Table{}, fmt.Errorf(`fail to fetch schema of %s: %w`, table, err)
 	}
 
 	schemaTable, err := getTable(ctx, fetcher.queryer, table)
@@ -61,6 +37,10 @@ func (fetcher fetcher) Fetch(ctx context.Context, table string) (SchemaTable, er
 		return wrapError(err)
 	}
 
+	if schemaTable.View {
+		return schemaTable, nil
+	}
+
 	schemaTable.PrimaryKey, err = queryPrimaryKey(ctx, fetcher.queryer, table)
 	if err != nil {
 		return wrapError(err)
@@ -71,7 +51,7 @@ func (fetcher fetcher) Fetch(ctx context.Context, table string) (SchemaTable, er
 		return wrapError(err)
 	}
 
-	schemaTable.UniqueKeys, err = queryUniqueKeys(ctx, fetcher.queryer, table)
+	schemaTable.Indexes, err = queryIndexes(ctx, fetcher.queryer, table)
 	if err != nil {
 		return wrapError(err)
 	}
@@ -79,36 +59,38 @@ func (fetcher fetcher) Fetch(ctx context.Context, table string) (SchemaTable, er
 	return schemaTable, nil
 }
 
-func getTable(ctx context.Context, tx gf_spanner.Queryer, table string) (SchemaTable, error) {
+func getTable(ctx context.Context, tx gf_spanner.Queryer, table string) (Table, error) {
 	sql := `--sql query table name and parent information
 SELECT
 	TABLE_NAME AS Name,
+	(TABLE_TYPE = 'VIEW') AS IsView,
 	IFNULL(PARENT_TABLE_NAME, "") AS Parent,
 FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = @Table`
-	found, err := gf_spanner.ScanRowsStruct[SchemaTable](tx.Query(ctx, spanner.Statement{
+	found, err := gf_spanner.ScanRowsStruct[Table](tx.Query(ctx, spanner.Statement{
 		SQL:    sql,
 		Params: map[string]interface{}{"Table": table},
 	}))
 	if err != nil {
-		return SchemaTable{}, fmt.Errorf(`fail to get table %s: %w`, table, err)
+		return Table{}, fmt.Errorf(`fail to get table %s: %w`, table, err)
 	}
 	if len(found) == 0 {
-		return SchemaTable{}, fmt.Errorf("table %q not found", table)
+		return Table{}, fmt.Errorf("table %q not found", table)
 	}
 	return found[0], nil
 }
 
-func queryColumns(ctx context.Context, tx gf_spanner.Queryer, table string) ([]SchemaColumn, error) {
+func queryColumns(ctx context.Context, tx gf_spanner.Queryer, table string) ([]Column, error) {
 	sql := `--sql query column information
 SELECT
 	COLUMN_NAME AS Name,
 	SPANNER_TYPE AS Type,
 	(IS_NULLABLE = 'YES') AS Nullable,
+	(IS_GENERATED = 'ALWAYS') AS Generated,
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = @Table
 ORDER BY ORDINAL_POSITION`
-	columns, err := gf_spanner.ScanRowsStruct[SchemaColumn](tx.Query(ctx, spanner.Statement{
+	columns, err := gf_spanner.ScanRowsStruct[Column](tx.Query(ctx, spanner.Statement{
 		SQL:    sql,
 		Params: map[string]interface{}{"Table": table},
 	}))
@@ -140,7 +122,7 @@ ORDER BY kcu.ORDINAL_POSITION`
 	return lo.Map(primaryKey, func(it PrimaryKey, i int) string { return it.Name }), nil
 }
 
-func queryForeignKeys(ctx context.Context, tx gf_spanner.Queryer, table string) ([]SchemaForeignKey, error) {
+func queryForeignKeys(ctx context.Context, tx gf_spanner.Queryer, table string) ([]ForeignKey, error) {
 	sql := `--sql query foreign key information
 SELECT
 	tc.CONSTRAINT_NAME AS Name,
@@ -163,7 +145,7 @@ FROM
 	JOIN INFORMATION_SCHEMA.CONSTRAINT_TABLE_USAGE ctu ON ctu.CONSTRAINT_NAME = rc.UNIQUE_CONSTRAINT_NAME
 WHERE tc.CONSTRAINT_TYPE = 'FOREIGN KEY' AND tc.TABLE_NAME = @Table
 ORDER BY Name`
-	foreignKeys, err := gf_spanner.ScanRowsStruct[SchemaForeignKey](tx.Query(ctx, spanner.Statement{
+	foreignKeys, err := gf_spanner.ScanRowsStruct[ForeignKey](tx.Query(ctx, spanner.Statement{
 		SQL:    sql,
 		Params: map[string]interface{}{"Table": table},
 	}))
@@ -173,32 +155,33 @@ ORDER BY Name`
 	return foreignKeys, nil
 }
 
-func queryUniqueKeys(ctx context.Context, tx gf_spanner.Queryer, table string) ([]SchemaUniqueKey, error) {
+func queryIndexes(ctx context.Context, tx gf_spanner.Queryer, table string) ([]Index, error) {
 	sql := `--sql query unique key information
-WITH
-	EXCLUDE_FK_BACKING AS (
-		SELECT rc.UNIQUE_CONSTRAINT_NAME AS Name
-		FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+WITH EXCLUDE_FK_BACKING AS (
+	SELECT rc.UNIQUE_CONSTRAINT_NAME AS Name
+	FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
 		JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc ON rc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
 		JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc2 ON tc2.CONSTRAINT_NAME = rc.UNIQUE_CONSTRAINT_NAME AND tc2.CONSTRAINT_TYPE = 'UNIQUE'
-		WHERE tc.CONSTRAINT_TYPE = 'FOREIGN KEY'
-	)
+	WHERE tc.CONSTRAINT_TYPE = 'FOREIGN KEY'
+)
 SELECT
 	idx.INDEX_NAME AS Name,
+	idx.IS_UNIQUE AS IsUnique,
 	ARRAY(
-		SELECT idxc.COLUMN_NAME
+		SELECT AS STRUCT
+			idxc.COLUMN_NAME AS Name,
+			idxc.COLUMN_ORDERING = 'DESC' AS IsDesc,
 		FROM INFORMATION_SCHEMA.INDEX_COLUMNS idxc
-		WHERE idx.INDEX_NAME = idxc.INDEX_NAME
+		WHERE idx.INDEX_NAME = idxc.INDEX_NAME AND idxc.ORDINAL_POSITION IS NOT NULL
 		ORDER BY idxc.ORDINAL_POSITION
 	) AS Key
 FROM INFORMATION_SCHEMA.INDEXES idx
 WHERE
 	idx.TABLE_NAME = @Table
-	AND idx.IS_UNIQUE
-	AND INDEX_TYPE = "INDEX"
+	AND INDEX_TYPE = 'INDEX'
 	AND idx.INDEX_NAME NOT IN (SELECT Name FROM EXCLUDE_FK_BACKING)
 ORDER BY Name`
-	uniqueKeys, err := gf_spanner.ScanRowsStruct[SchemaUniqueKey](tx.Query(ctx, spanner.Statement{
+	uniqueKeys, err := gf_spanner.ScanRowsStruct[Index](tx.Query(ctx, spanner.Statement{
 		SQL:    sql,
 		Params: map[string]interface{}{"Table": table},
 	}))
