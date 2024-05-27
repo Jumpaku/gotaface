@@ -1,4 +1,7 @@
 {{- /* Go Template */ -}}
+{{ range . }}
+
+{{ if not .View }}
 CREATE TABLE {{.Name}}(
 {{ range $Index, $Column := .Columns }}
     {{$Column.Name}} {{$Column.Type}} {{ if (not $Column.Nullable) }}NOT NULL{{ end }},
@@ -20,10 +23,15 @@ CREATE TABLE {{.Name}}(
     {{ end }}
 ){{ if .Parent }}, INTERLEAVE IN PARENT {{.Parent}} ON DELETE CASCADE{{ end }};
 
-{{ range $Index, $UniqueKey := .UniqueKeys }}
-CREATE UNIQUE INDEX {{$UniqueKey.Name}} ON {{.Name}} (
-    {{ range $Index, $Name := $UniqueKey.Key }}
-    {{ if $Index }}, {{ end }}{{$Name}}
+{{ $table := . }}
+{{ range $i, $Index := .Indexes }}
+CREATE UNIQUE INDEX {{$Index.Name}} ON {{$table.Name}} (
+    {{ range $Index, $Key := $Index.Key }}
+    {{ if $Index }}, {{ end }}{{$Key.Name}} {{ if $Key.Desc }}DESC{{ end }}
     {{ end }}
 );
+{{ end }}
+
+{{ end }}
+
 {{ end }}

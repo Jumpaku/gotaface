@@ -45,7 +45,9 @@ func TestFetcher(t *testing.T) {
 					{Name: "Col_17", Type: "TIMESTAMP", Nullable: true},
 					{Name: "Col_18", Type: "TIMESTAMP", Nullable: false},
 				},
-				PrimaryKey: []string{"PK"},
+				PrimaryKey:  []string{"PK"},
+				ForeignKeys: []schema.ForeignKey{},
+				Indexes:     []schema.Index{},
 			},
 		},
 		{
@@ -56,7 +58,9 @@ func TestFetcher(t *testing.T) {
 				Columns: []schema.Column{
 					{Name: "PK_11", Type: "INT64"},
 				},
-				PrimaryKey: []string{"PK_11"},
+				PrimaryKey:  []string{"PK_11"},
+				ForeignKeys: []schema.ForeignKey{},
+				Indexes:     []schema.Index{},
 			},
 		},
 		{
@@ -68,8 +72,10 @@ func TestFetcher(t *testing.T) {
 					{Name: "PK_11", Type: "INT64"},
 					{Name: "PK_21", Type: "INT64"},
 				},
-				PrimaryKey: []string{"PK_11", "PK_21"},
-				Parent:     "B_1",
+				PrimaryKey:  []string{"PK_11", "PK_21"},
+				Parent:      "B_1",
+				ForeignKeys: []schema.ForeignKey{},
+				Indexes:     []schema.Index{},
 			},
 		},
 		{
@@ -82,8 +88,10 @@ func TestFetcher(t *testing.T) {
 					{Name: "PK_21", Type: "INT64"},
 					{Name: "PK_31", Type: "INT64"},
 				},
-				PrimaryKey: []string{"PK_11", "PK_21", "PK_31"},
-				Parent:     "B_2",
+				PrimaryKey:  []string{"PK_11", "PK_21", "PK_31"},
+				Parent:      "B_2",
+				ForeignKeys: []schema.ForeignKey{},
+				Indexes:     []schema.Index{},
 			},
 		},
 		{
@@ -96,8 +104,10 @@ func TestFetcher(t *testing.T) {
 					{Name: "PK_21", Type: "INT64"},
 					{Name: "PK_41", Type: "INT64"},
 				},
-				PrimaryKey: []string{"PK_11", "PK_21", "PK_41"},
-				Parent:     "B_2",
+				PrimaryKey:  []string{"PK_11", "PK_21", "PK_41"},
+				Parent:      "B_2",
+				ForeignKeys: []schema.ForeignKey{},
+				Indexes:     []schema.Index{},
 			},
 		},
 		{
@@ -109,7 +119,9 @@ func TestFetcher(t *testing.T) {
 					{Name: "PK_11", Type: "INT64"},
 					{Name: "PK_12", Type: "INT64"},
 				},
-				PrimaryKey: []string{"PK_11", "PK_12"},
+				PrimaryKey:  []string{"PK_11", "PK_12"},
+				ForeignKeys: []schema.ForeignKey{},
+				Indexes:     []schema.Index{},
 			},
 		},
 		{
@@ -130,6 +142,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_21", "PK_22"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -150,6 +163,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_31", "PK_32"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -170,6 +184,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_41", "PK_42"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -196,6 +211,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_51", "PK_52"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -216,6 +232,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_11"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -236,6 +253,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_11", "PK_12"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -256,6 +274,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_21", "PK_22"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -276,6 +295,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_11", "PK_12"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -296,6 +316,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_21", "PK_22"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -316,6 +337,7 @@ func TestFetcher(t *testing.T) {
 						ReferencingKey:  []string{"PK_31", "PK_32"},
 					},
 				},
+				Indexes: []schema.Index{},
 			},
 		},
 		{
@@ -347,6 +369,7 @@ func TestFetcher(t *testing.T) {
 					{Name: "UQ_G_C3_C2", Unique: true, Key: []*schema.IndexKey{{Name: "C3"}, {Name: "C2"}}},
 					{Name: "UQ_G_C3_C2_C1", Unique: true, Key: []*schema.IndexKey{{Name: "C3"}, {Name: "C2"}, {Name: "C1"}}},
 				},
+				ForeignKeys: []schema.ForeignKey{},
 			},
 		},
 		{
@@ -358,7 +381,9 @@ func TestFetcher(t *testing.T) {
 					{Name: "PK", Type: "INT64"},
 					{Name: "Gen", Type: "INT64", Nullable: true, Generated: true},
 				},
-				PrimaryKey: []string{"PK"},
+				PrimaryKey:  []string{"PK"},
+				ForeignKeys: []schema.ForeignKey{},
+				Indexes:     []schema.Index{},
 			},
 		},
 		{
@@ -377,6 +402,7 @@ func TestFetcher(t *testing.T) {
 					{Name: "IDX_I_C1Desc_C2Asc", Key: []*schema.IndexKey{{Name: "C1", Desc: true}, {Name: "C2"}}},
 					{Name: "IDX_I_Storing", Key: []*schema.IndexKey{{Name: "C1"}}},
 				},
+				ForeignKeys: []schema.ForeignKey{},
 			},
 		},
 		{
