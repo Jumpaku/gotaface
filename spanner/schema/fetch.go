@@ -60,6 +60,11 @@ func (fetcher fetcher) Fetch(ctx context.Context, table string) (Table, error) {
 }
 
 func getTable(ctx context.Context, tx gf_spanner.Queryer, table string) (Table, error) {
+	type row struct {
+		Name   string
+		IsView bool
+		Parent string
+	}
 	sql := `--sql query table name and parent information
 SELECT
 	TABLE_NAME AS Name,
@@ -67,7 +72,7 @@ SELECT
 	IFNULL(PARENT_TABLE_NAME, "") AS Parent,
 FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = @Table`
-	found, err := gf_spanner.ScanRowsStruct[Table](tx.Query(ctx, spanner.Statement{
+	found, err := gf_spanner.ScanRowsStruct[row](tx.Query(ctx, spanner.Statement{
 		SQL:    sql,
 		Params: map[string]interface{}{"Table": table},
 	}))
@@ -77,7 +82,11 @@ WHERE TABLE_NAME = @Table`
 	if len(found) == 0 {
 		return Table{}, fmt.Errorf("table %q not found", table)
 	}
-	return found[0], nil
+	return Table{
+		Name:   found[0].Name,
+		View:   found[0].IsView,
+		Parent: found[0].Parent,
+	}, nil
 }
 
 func queryColumns(ctx context.Context, tx gf_spanner.Queryer, table string) ([]Column, error) {
@@ -156,6 +165,15 @@ ORDER BY Name`
 }
 
 func queryIndexes(ctx context.Context, tx gf_spanner.Queryer, table string) ([]Index, error) {
+	type indexKeyType struct {
+		Name   string
+		IsDesc bool
+	}
+	type indexType struct {
+		Name     string
+		IsUnique bool
+		Key      []*indexKeyType
+	}
 	sql := `--sql query unique key information
 WITH EXCLUDE_FK_BACKING AS (
 	SELECT rc.UNIQUE_CONSTRAINT_NAME AS Name
@@ -181,12 +199,20 @@ WHERE
 	AND INDEX_TYPE = 'INDEX'
 	AND idx.INDEX_NAME NOT IN (SELECT Name FROM EXCLUDE_FK_BACKING)
 ORDER BY Name`
-	uniqueKeys, err := gf_spanner.ScanRowsStruct[Index](tx.Query(ctx, spanner.Statement{
+	indexes, err := gf_spanner.ScanRowsStruct[indexType](tx.Query(ctx, spanner.Statement{
 		SQL:    sql,
 		Params: map[string]interface{}{"Table": table},
 	}))
 	if err != nil {
 		return nil, fmt.Errorf(`fail to get unique keys of %s: %w`, table, err)
 	}
-	return uniqueKeys, nil
+	return lo.Map(indexes, func(idx indexType, _ int) Index {
+		return Index{
+			Name:   idx.Name,
+			Unique: idx.IsUnique,
+			Key: lo.Map(idx.Key, func(k *indexKeyType, _ int) IndexKey {
+				return IndexKey{Name: k.Name, Desc: k.IsDesc}
+			}),
+		}
+	}), nil
 }

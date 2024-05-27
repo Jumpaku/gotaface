@@ -4,7 +4,7 @@ type Schemas []Table
 
 type Table struct {
 	Name        string       `json:"name"`
-	View        bool         `json:"view" spanner:"IsView"`
+	View        bool         `json:"view"`
 	Columns     []Column     `json:"columns"`
 	PrimaryKey  []string     `json:"primary_key"`
 	Parent      string       `json:"parent"`
@@ -27,12 +27,12 @@ type ForeignKey struct {
 }
 
 type Index struct {
-	Name   string      `json:"name"`
-	Key    []*IndexKey `json:"key"`
-	Unique bool        `json:"unique" spanner:"IsUnique"`
+	Name   string     `json:"name"`
+	Key    []IndexKey `json:"key"`
+	Unique bool       `json:"unique"`
 }
 
 type IndexKey struct {
 	Name string `json:"name"`
-	Desc bool   `json:"desc" spanner:"IsDesc"`
+	Desc bool   `json:"desc"`
 }
