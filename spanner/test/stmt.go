@@ -1,23 +1,35 @@
 package test
 
 import (
-	"strings"
-
+	"github.com/Jumpaku/sqanner/tokenize"
 	"github.com/samber/lo"
 )
 
 func Split(stmts string) []string {
-	result := []string{}
-	for _, stmt := range strings.Split(stmts, ";") {
-		lines := strings.Split(stmt, "\n")
-		lines = lo.Filter(lines, func(line string, i int) bool {
-			return !(strings.HasPrefix(line, "--") || strings.HasPrefix(line, "//"))
-		})
-		stmt = strings.Join(lines, " ")
-		stmt = strings.TrimSpace(stmt)
-		if stmt != "" {
-			result = append(result, stmt)
-		}
+	tokens, err := tokenize.Tokenize([]rune(stmts))
+	if err != nil {
+		panic(err)
 	}
-	return result
+	result := []string{""}
+	for _, token := range tokens {
+		switch token.Kind {
+		case tokenize.TokenComment:
+			if result[len(result)-1] != "" {
+				result = append(result, " ")
+			}
+			continue
+		case tokenize.TokenSpecialChar:
+			if string(token.Content) == ";" {
+				result = append(result, "")
+				continue
+			}
+		case tokenize.TokenSpace:
+			if result[len(result)-1] == "" {
+				continue
+			}
+		}
+		result[len(result)-1] += string(token.Content)
+	}
+
+	return lo.Filter(result, func(item string, _ int) bool { return item != "" })
 }

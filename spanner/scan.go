@@ -7,7 +7,7 @@ import (
 )
 
 func ScanRowsStruct[RowStruct any](itr *spanner.RowIterator) ([]RowStruct, error) {
-	var rows []RowStruct
+	rows := []RowStruct{}
 	err := itr.Do(func(r *spanner.Row) error {
 		var row RowStruct
 		err := r.ToStructLenient(&row)
