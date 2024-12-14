@@ -48,3 +48,13 @@ services:
       - ./:/work
     working_dir: /work
     command: ["sh", "spanner/tools/new-instance.sh"]
+
+  # to test implementation for postgres
+  postgres:
+    image: postgres:17.2-alpine3.20
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: test
+      POSTGRES_DB: test
+    ports:
+      - "54322:5432"

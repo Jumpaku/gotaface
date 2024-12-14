@@ -44,3 +44,7 @@ example-spanner: ## run in container gcloud
 .PHONY: test-sqlite3
 test-sqlite3: ## test-sqlite3
 	GOTAFACE_TEST_SQLITE3=true go test ./sqlite3/schema/...
+
+.PHONY: test-postgres
+test-postgres: ## run in container work
+	GOTAFACE_TEST_POSTGRES=true go test ./postgres/schema/... -data-source="postgres://test:password@localhost:54322/test?sslmode=disable"
